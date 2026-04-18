@@ -41,6 +41,7 @@
             android:textAppearance="?android:textAppearance"/>
 
         <TextView
+            android:id="@+id/recording_extension"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text=".wav"

@@ -223,6 +223,7 @@ public class SaidItService extends Service {
                 if(!newFileName.equals("")){
                     filename = newFileName + "." + outputFormat.extension;
                 }
+                filename = filename.replaceAll("[:\\\\/*?\"<>|]", ".");
 
                 File storageDir;
                 if(isExternalStorageWritable()){
@@ -236,16 +237,6 @@ public class SaidItService extends Service {
                 }
                 File file = new File(storageDir, filename);
 
-                if (!file.exists()) {
-                    try {
-                        if (!file.createNewFile()) {
-                            throw new IOException("Failed to create file");
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        showToast(getString(R.string.cant_create_file) + file.getAbsolutePath());
-                    }
-                }
                 try (AudioFileWriter writer = AudioFileWriterFactory.create(outputFormat, SAMPLE_RATE, file)) {
                     try {
                         audioMemory.read(skipBytes, new AudioMemory.Consumer() {
@@ -305,6 +296,7 @@ public class SaidItService extends Service {
                 final String dateTime = DateUtils.formatDateTime(SaidItService.this, millis, flags);
                 final OutputFormat outputFormat = getOutputFormat();
                 String filename = "Echo - " + dateTime + "." + outputFormat.extension;
+                filename = filename.replaceAll("[:\\\\/*?\"<>|]", ".");
 
                 File storageDir;
                 if(isExternalStorageWritable()){
@@ -317,13 +309,6 @@ public class SaidItService extends Service {
                 String path = storagePath + "/" + filename;
 
                 outputFile = new File(path);
-                try {
-                    outputFile.createNewFile();
-                } catch (IOException e) {
-                    filename = filename.replace(':', '.');
-                    path = storagePath + "/" + filename;
-                    outputFile = new File(path);
-                }
                 try {
                     audioFileWriter = AudioFileWriterFactory.create(outputFormat, SAMPLE_RATE, outputFile);
                 } catch (IOException e) {
