@@ -44,6 +44,8 @@ import androidx.core.content.FileProvider;
 
 import java.io.File;
 
+import android.text.format.DateUtils;
+
 import eu.mrogalski.android.TimeFormat;
 import eu.mrogalski.android.Views;
 
@@ -420,19 +422,19 @@ public class SaidItFragment extends Fragment {
                                 if (keepRecording) {
                                     echo.startRecording(seconds);
                                 } else {
-                                    //create alert dialog with exittext to name the file
                                     View dialogView = View.inflate(getActivity(), R.layout.dialog_save_recording, null);
                                     EditText fileName = dialogView.findViewById(R.id.recording_name);
+                                    long startMillis = System.currentTimeMillis() - (long)(seconds * 1000);
+                                    int flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_SHOW_DATE;
+                                    String defaultName = "Echo - " + DateUtils.formatDateTime(getActivity(), startMillis, flags);
+                                    fileName.setText(defaultName);
+                                    fileName.selectAll();
                                     new AlertDialog.Builder(getActivity())
                                         .setView(dialogView)
                                         .setPositiveButton("Save", new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int which) {
-                                                if(fileName.getText().toString().length() > 0){
-                                                    echo.dumpRecording(seconds, new PromptFileReceiver(getActivity()),fileName.getText().toString());
-                                                } else {
-                                                    Toast.makeText(getActivity(), "Please enter a file name", Toast.LENGTH_SHORT).show();
-                                                }
+                                                echo.dumpRecording(seconds, new PromptFileReceiver(getActivity()), fileName.getText().toString());
                                             }
                                         })
                                         .setNegativeButton("Cancel", null)
