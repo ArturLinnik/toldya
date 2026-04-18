@@ -1,10 +1,12 @@
 package eu.mrogalski.saidit;
 
 import android.app.Activity;
+import android.app.TimePickerDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Rect;
@@ -23,6 +25,7 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.TimePicker;
 
 import eu.mrogalski.StringFormat;
 import eu.mrogalski.android.TimeFormat;
@@ -68,6 +71,32 @@ public class SettingsActivity extends Activity {
 
     final TimeFormat.Result timeFormatResult = new TimeFormat.Result();
 
+    private void syncScheduleUI() {
+        final SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
+        boolean scheduleEnabled = prefs.getBoolean(SaidIt.SCHEDULE_ENABLED_KEY, false);
+        int startHour = prefs.getInt(SaidIt.SCHEDULE_START_HOUR_KEY, 8);
+        int startMinute = prefs.getInt(SaidIt.SCHEDULE_START_MINUTE_KEY, 0);
+        int endHour = prefs.getInt(SaidIt.SCHEDULE_END_HOUR_KEY, 23);
+        int endMinute = prefs.getInt(SaidIt.SCHEDULE_END_MINUTE_KEY, 0);
+
+        Button toggle = (Button) findViewById(R.id.schedule_toggle);
+        Button startTime = (Button) findViewById(R.id.schedule_start_time);
+        Button endTime = (Button) findViewById(R.id.schedule_end_time);
+        View timesLayout = findViewById(R.id.schedule_times_layout);
+
+        toggle.setText(scheduleEnabled ? R.string.schedule_on : R.string.schedule_off);
+        toggle.setBackgroundResource(scheduleEnabled ? R.drawable.green_button : R.drawable.gray_button);
+
+        startTime.setText(String.format("%02d:%02d", startHour, startMinute));
+        endTime.setText(String.format("%02d:%02d", endHour, endMinute));
+
+        startTime.setBackgroundResource(scheduleEnabled ? R.drawable.green_button : R.drawable.gray_button);
+        endTime.setBackgroundResource(scheduleEnabled ? R.drawable.green_button : R.drawable.gray_button);
+        startTime.setEnabled(scheduleEnabled);
+        endTime.setEnabled(scheduleEnabled);
+        timesLayout.setAlpha(scheduleEnabled ? 1.0f : 0.4f);
+    }
+
     private void syncUI() {
         final long maxMemory = Runtime.getRuntime().maxMemory();
         System.out.println("maxMemory = " + maxMemory);
@@ -83,6 +112,7 @@ public class SettingsActivity extends Activity {
         ((TextView)findViewById(R.id.history_limit)).setText(timeFormatResult.text);
 
         highlightButtons();
+        syncScheduleUI();
     }
 
     void highlightButtons() {
@@ -167,6 +197,63 @@ public class SettingsActivity extends Activity {
         initSampleRateButton(root, R.id.quality_48kHz, 48000, 44100);
 
         //debugPrintCodecs();
+
+        root.findViewById(R.id.schedule_toggle).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
+                boolean enabled = prefs.getBoolean(SaidIt.SCHEDULE_ENABLED_KEY, false);
+                prefs.edit().putBoolean(SaidIt.SCHEDULE_ENABLED_KEY, !enabled).apply();
+                syncScheduleUI();
+                if (service != null) {
+                    service.applySchedule();
+                }
+            }
+        });
+
+        root.findViewById(R.id.schedule_start_time).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
+                int hour = prefs.getInt(SaidIt.SCHEDULE_START_HOUR_KEY, 8);
+                int minute = prefs.getInt(SaidIt.SCHEDULE_START_MINUTE_KEY, 0);
+                new TimePickerDialog(SettingsActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minuteOfHour) {
+                        getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE).edit()
+                                .putInt(SaidIt.SCHEDULE_START_HOUR_KEY, hourOfDay)
+                                .putInt(SaidIt.SCHEDULE_START_MINUTE_KEY, minuteOfHour)
+                                .apply();
+                        syncScheduleUI();
+                        if (service != null) {
+                            service.applySchedule();
+                        }
+                    }
+                }, hour, minute, true).show();
+            }
+        });
+
+        root.findViewById(R.id.schedule_end_time).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
+                int hour = prefs.getInt(SaidIt.SCHEDULE_END_HOUR_KEY, 23);
+                int minute = prefs.getInt(SaidIt.SCHEDULE_END_MINUTE_KEY, 0);
+                new TimePickerDialog(SettingsActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minuteOfHour) {
+                        getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE).edit()
+                                .putInt(SaidIt.SCHEDULE_END_HOUR_KEY, hourOfDay)
+                                .putInt(SaidIt.SCHEDULE_END_MINUTE_KEY, minuteOfHour)
+                                .apply();
+                        syncScheduleUI();
+                        if (service != null) {
+                            service.applySchedule();
+                        }
+                    }
+                }, hour, minute, true).show();
+            }
+        });
 
         dialog.setDescriptionStringId(R.string.work_preparing_memory);
 
