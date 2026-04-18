@@ -113,6 +113,13 @@
     <string name="option_b_audio_quality">B) Sound quality</string>
     <string name="used_ram_description">Echo and other apps use system memory to keep their data. Large system memory consumption may slow other apps.</string>
     <string name="audio_quality_description">Quality of 8kHz is enough to recognize human speech. Higher options offer different tradeoffs between quality and memory consumption.</string>
+    <string name="schedule_title">C) Active hours</string>
+    <string name="schedule_description">When enabled, Echo will only listen during the specified hours. Outside these hours, the microphone is turned off to save battery.</string>
+    <string name="schedule_from">From</string>
+    <string name="schedule_to">To</string>
+    <string name="schedule_on">On</string>
+    <string name="schedule_off">Off</string>
+    <string name="schedule_paused_notification">Echo is paused (outside active hours)</string>
     <string name="settings_return">Return</string>
 
     <!-- Others -->
