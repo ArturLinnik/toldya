@@ -188,6 +188,79 @@
             android:layout_height="wrap_content"
             android:text="@string/output_format_description"/>
 
+        <TextView
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/schedule_title"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:layout_marginBottom="10dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/schedule_toggle"
+                android:textSize="23sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/schedule_off"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/schedule_times_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:gravity="center"
+            android:layout_marginBottom="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/schedule_from"
+                android:textSize="18sp"/>
+
+            <Button
+                android:id="@+id/schedule_start_time"
+                android:textSize="23sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="20dp"
+                android:text="08:00"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/schedule_to"
+                android:textSize="18sp"/>
+
+            <Button
+                android:id="@+id/schedule_end_time"
+                android:textSize="23sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:text="23:00"/>
+        </LinearLayout>
+
+        <TextView
+            style="@style/SmallText"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/schedule_description"/>
+
         <Button
             android:id="@+id/settings_return"
             android:layout_marginTop="20dp"

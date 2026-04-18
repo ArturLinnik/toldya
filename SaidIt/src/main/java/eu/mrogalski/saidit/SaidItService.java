@@ -30,6 +30,7 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
 
 import static eu.mrogalski.saidit.SaidIt.*;
 
@@ -65,13 +66,19 @@ public class SaidItService extends Service {
         audioHandler = new Handler(audioThread.getLooper());
 
         if(preferences.getBoolean(AUDIO_MEMORY_ENABLED_KEY, true)) {
-            innerStartListening();
+            if (isWithinSchedule()) {
+                innerStartListening();
+            }
+            if (preferences.getBoolean(SCHEDULE_ENABLED_KEY, false)) {
+                scheduleNextCheck();
+            }
         }
 
     }
 
     @Override
     public void onDestroy() {
+        cancelScheduleCheck();
         stopRecording(null, "");
         innerStopListening();
         stopForeground(true);
@@ -91,7 +98,13 @@ public class SaidItService extends Service {
         getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE)
                 .edit().putBoolean(AUDIO_MEMORY_ENABLED_KEY, true).commit();
 
-        innerStartListening();
+        if (isWithinSchedule()) {
+            innerStartListening();
+        }
+        SharedPreferences prefs = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
+        if (prefs.getBoolean(SCHEDULE_ENABLED_KEY, false)) {
+            scheduleNextCheck();
+        }
     }
 
     public void disableListening() {
@@ -525,9 +538,86 @@ public class SaidItService extends Service {
         }
     }
 
+    private static final String ACTION_SCHEDULE_CHECK = "eu.mrogalski.saidit.SCHEDULE_CHECK";
+    private static final int SCHEDULE_CHECK_REQUEST_CODE = 2;
+    private static final long SCHEDULE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
+
+    boolean isWithinSchedule() {
+        final SharedPreferences prefs = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
+        if (!prefs.getBoolean(SCHEDULE_ENABLED_KEY, false)) {
+            return true;
+        }
+        int startHour = prefs.getInt(SCHEDULE_START_HOUR_KEY, 8);
+        int startMinute = prefs.getInt(SCHEDULE_START_MINUTE_KEY, 0);
+        int endHour = prefs.getInt(SCHEDULE_END_HOUR_KEY, 23);
+        int endMinute = prefs.getInt(SCHEDULE_END_MINUTE_KEY, 0);
+
+        Calendar now = Calendar.getInstance();
+        int nowMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
+        int startMinutes = startHour * 60 + startMinute;
+        int endMinutes = endHour * 60 + endMinute;
+
+        if (startMinutes <= endMinutes) {
+            return nowMinutes >= startMinutes && nowMinutes < endMinutes;
+        } else {
+            return nowMinutes >= startMinutes || nowMinutes < endMinutes;
+        }
+    }
+
+    public void applySchedule() {
+        final SharedPreferences prefs = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
+        boolean listeningEnabled = prefs.getBoolean(AUDIO_MEMORY_ENABLED_KEY, true);
+
+        if (!listeningEnabled) {
+            return;
+        }
+
+        if (isWithinSchedule()) {
+            if (state == STATE_READY) {
+                innerStartListening();
+            }
+        } else {
+            if (state == STATE_LISTENING) {
+                innerStopListening();
+            }
+        }
+
+        scheduleNextCheck();
+    }
+
+    private void scheduleNextCheck() {
+        final SharedPreferences prefs = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
+        if (!prefs.getBoolean(SCHEDULE_ENABLED_KEY, false)) {
+            cancelScheduleCheck();
+            return;
+        }
+
+        Intent intent = new Intent(this, SaidItService.class);
+        intent.setAction(ACTION_SCHEDULE_CHECK);
+        PendingIntent pendingIntent = PendingIntent.getService(this, SCHEDULE_CHECK_REQUEST_CODE,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        alarmManager.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                SystemClock.elapsedRealtime() + SCHEDULE_CHECK_INTERVAL_MS, pendingIntent);
+    }
+
+    private void cancelScheduleCheck() {
+        Intent intent = new Intent(this, SaidItService.class);
+        intent.setAction(ACTION_SCHEDULE_CHECK);
+        PendingIntent pendingIntent = PendingIntent.getService(this, SCHEDULE_CHECK_REQUEST_CODE,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_NO_CREATE);
+        if (pendingIntent != null) {
+            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+            alarmManager.cancel(pendingIntent);
+        }
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         startForeground(FOREGROUND_NOTIFICATION_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+        if (intent != null && ACTION_SCHEDULE_CHECK.equals(intent.getAction())) {
+            applySchedule();
+        }
         return START_STICKY;
     }
 
