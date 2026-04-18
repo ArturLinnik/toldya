@@ -6,6 +6,7 @@ public class SaidIt {
     static final String AUDIO_MEMORY_ENABLED_KEY = "audio_memory_enabled";
     static final String AUDIO_MEMORY_SIZE_KEY = "audio_memory_size";
     static final String SAMPLE_RATE_KEY = "sample_rate";
+    static final String OUTPUT_FORMAT_KEY = "output_format";
     static final String SCHEDULE_ENABLED_KEY = "schedule_enabled";
     static final String SCHEDULE_START_HOUR_KEY = "schedule_start_hour";
     static final String SCHEDULE_START_MINUTE_KEY = "schedule_start_minute";
