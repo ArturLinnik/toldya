@@ -424,6 +424,11 @@ public class SaidItFragment extends Fragment {
                                 } else {
                                     View dialogView = View.inflate(getActivity(), R.layout.dialog_save_recording, null);
                                     EditText fileName = dialogView.findViewById(R.id.recording_name);
+                                    TextView extensionLabel = dialogView.findViewById(R.id.recording_extension);
+                                    String formatPref = getActivity().getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE)
+                                            .getString(SaidIt.OUTPUT_FORMAT_KEY, "WAV");
+                                    OutputFormat outputFormat = OutputFormat.fromPreference(formatPref);
+                                    extensionLabel.setText("." + outputFormat.extension);
                                     long startMillis = System.currentTimeMillis() - (long)(seconds * 1000);
                                     int flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_SHOW_DATE;
                                     String defaultName = "Echo - " + DateUtils.formatDateTime(getActivity(), startMillis, flags);

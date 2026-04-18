@@ -206,6 +206,7 @@ public class SaidItService extends Service {
                 if(!newFileName.equals("")){
                     filename = newFileName + ".wav";
                 }
+                filename = filename.replaceAll("[:\\\\/*?\"<>|]", ".");
 
                 File storageDir;
                 if(isExternalStorageWritable()){
@@ -220,19 +221,6 @@ public class SaidItService extends Service {
                 }
                 File file = new File(storageDir, filename);
 
-                // Create the file if it doesn't exist
-                if (!file.exists()) {
-                    try {
-                        if (!file.createNewFile()) {
-                            // Handle file creation failure
-                            throw new IOException("Failed to create file");
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        // Handle IOException
-                        showToast(getString(R.string.cant_create_file) + file.getAbsolutePath());
-                    }
-                }
                 final WavAudioFormat format = new WavAudioFormat.Builder().sampleRate(SAMPLE_RATE).build();
                 try (WavFileWriter writer = new WavFileWriter(format, file)) {
                     try {
@@ -294,6 +282,7 @@ public class SaidItService extends Service {
                 final int flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_SHOW_DATE;
                 final String dateTime = DateUtils.formatDateTime(SaidItService.this, millis, flags);
                 String filename = "Echo - " + dateTime + ".wav";
+                filename = filename.replaceAll("[:\\\\/*?\"<>|]", ".");
 
                 File storageDir;
                 if(isExternalStorageWritable()){
@@ -307,13 +296,6 @@ public class SaidItService extends Service {
                 String path = storagePath + "/" + filename;
 
                 wavFile = new File(path);
-                try {
-                    wavFile.createNewFile();
-                } catch (IOException e) {
-                    filename = filename.replace(':', '.');
-                    path = storagePath + "/" + filename;
-                    wavFile = new File(path);
-                }
                 WavAudioFormat format = new WavAudioFormat.Builder().sampleRate(SAMPLE_RATE).build();
                 try {
                     wavFileWriter = new WavFileWriter(format, wavFile);
