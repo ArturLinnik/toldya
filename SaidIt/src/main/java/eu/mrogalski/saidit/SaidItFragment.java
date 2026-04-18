@@ -468,7 +468,9 @@ public class SaidItFragment extends Fragment {
     static Notification buildNotificationForFile(Context context, File outFile) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         Uri fileUri = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".provider", outFile);
-        intent.setDataAndType(fileUri, "audio/wav");
+        String mimeType = java.net.URLConnection.guessContentTypeFromName(outFile.getName());
+        if (mimeType == null) mimeType = "audio/*";
+        intent.setDataAndType(fileUri, mimeType);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // Grant read permission to the receiving app
 
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);

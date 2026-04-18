@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Rect;
@@ -32,6 +33,7 @@ public class SettingsActivity extends Activity {
     static final String TAG = SettingsActivity.class.getSimpleName();
     private final MemoryOnClickListener memoryClickListener = new MemoryOnClickListener();
     private final QualityOnClickListener qualityClickListener = new QualityOnClickListener();
+    private final FormatOnClickListener formatClickListener = new FormatOnClickListener();
 
 
     final WorkingDialog dialog = new WorkingDialog();
@@ -96,12 +98,29 @@ public class SettingsActivity extends Activity {
         else if(samplingRate >= 16000) button = 2;
         else button = 1;
         highlightButton(R.id.quality_8kHz, R.id.quality_16kHz, R.id.quality_48kHz, button);
+
+        SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
+        OutputFormat format = OutputFormat.fromPreference(prefs.getString(SaidIt.OUTPUT_FORMAT_KEY, "WAV"));
+        switch (format) {
+            case FLAC: button = 2; break;
+            case OGG:  button = 3; break;
+            case OPUS: button = 4; break;
+            default:   button = 1; break;
+        }
+        highlightButton(R.id.format_wav, R.id.format_flac, R.id.format_ogg, R.id.format_opus, button);
     }
 
     private void highlightButton(int button1, int button2, int button3, int i) {
         findViewById(button1).setBackgroundResource(1 == i ? R.drawable.green_button : R.drawable.gray_button);
         findViewById(button2).setBackgroundResource(2 == i ? R.drawable.green_button : R.drawable.gray_button);
         findViewById(button3).setBackgroundResource(3 == i ? R.drawable.green_button : R.drawable.gray_button);
+    }
+
+    private void highlightButton(int button1, int button2, int button3, int button4, int i) {
+        findViewById(button1).setBackgroundResource(1 == i ? R.drawable.green_button : R.drawable.gray_button);
+        findViewById(button2).setBackgroundResource(2 == i ? R.drawable.green_button : R.drawable.gray_button);
+        findViewById(button3).setBackgroundResource(3 == i ? R.drawable.green_button : R.drawable.gray_button);
+        findViewById(button4).setBackgroundResource(4 == i ? R.drawable.green_button : R.drawable.gray_button);
     }
 
     @Override
@@ -166,7 +185,10 @@ public class SettingsActivity extends Activity {
         initSampleRateButton(root, R.id.quality_16kHz, 16000, 22050);
         initSampleRateButton(root, R.id.quality_48kHz, 48000, 44100);
 
-        //debugPrintCodecs();
+        root.findViewById(R.id.format_wav).setOnClickListener(formatClickListener);
+        root.findViewById(R.id.format_flac).setOnClickListener(formatClickListener);
+        root.findViewById(R.id.format_ogg).setOnClickListener(formatClickListener);
+        root.findViewById(R.id.format_opus).setOnClickListener(formatClickListener);
 
         dialog.setDescriptionStringId(R.string.work_preparing_memory);
 
@@ -269,6 +291,22 @@ public class SettingsActivity extends Activity {
                 return ((Integer) tag).intValue();
             }
             return 8000;
+        }
+    }
+
+    private class FormatOnClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            String format;
+            switch (v.getId()) {
+                case R.id.format_flac: format = "FLAC"; break;
+                case R.id.format_ogg:  format = "OGG"; break;
+                case R.id.format_opus: format = "OPUS"; break;
+                default:               format = "WAV"; break;
+            }
+            getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+                    .edit().putString(SaidIt.OUTPUT_FORMAT_KEY, format).apply();
+            highlightButtons();
         }
     }
 }

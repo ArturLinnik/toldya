@@ -31,8 +31,6 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
 
-import simplesound.pcm.WavAudioFormat;
-import simplesound.pcm.WavFileWriter;
 import static eu.mrogalski.saidit.SaidIt.*;
 
 public class SaidItService extends Service {
@@ -44,9 +42,9 @@ public class SaidItService extends Service {
     volatile int FILL_RATE;
 
 
-    File wavFile;
+    File outputFile;
     AudioRecord audioRecord; // used only in the audio thread
-    WavFileWriter wavFileWriter; // used only in the audio thread
+    AudioFileWriter audioFileWriter; // used only in the audio thread
     final AudioMemory audioMemory = new AudioMemory(); // used only in the audio thread
 
     HandlerThread audioThread;
@@ -186,6 +184,11 @@ public class SaidItService extends Service {
 
     }
 
+    private OutputFormat getOutputFormat() {
+        SharedPreferences prefs = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
+        return OutputFormat.fromPreference(prefs.getString(OUTPUT_FORMAT_KEY, "WAV"));
+    }
+
     public void dumpRecording(final float memorySeconds, final WavFileReceiver wavFileReceiver, String newFileName) {
         if(state != STATE_LISTENING) throw new IllegalStateException("Not listening!");
 
@@ -202,14 +205,14 @@ public class SaidItService extends Service {
                 long millis  = System.currentTimeMillis() - 1000 * useBytes / FILL_RATE;
                 final int flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_SHOW_DATE;
                 final String dateTime = DateUtils.formatDateTime(SaidItService.this, millis, flags);
-                String filename = "Echo - " + dateTime + ".wav";
+                final OutputFormat outputFormat = getOutputFormat();
+                String filename = "Echo - " + dateTime + "." + outputFormat.extension;
                 if(!newFileName.equals("")){
-                    filename = newFileName + ".wav";
+                    filename = newFileName + "." + outputFormat.extension;
                 }
 
                 File storageDir;
                 if(isExternalStorageWritable()){
-                    // Use public storage directory for Android 11+ (min SDK 30)
                     storageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "Echo");
                 }else{
                     storageDir = new File(getFilesDir(), "Echo");
@@ -220,21 +223,17 @@ public class SaidItService extends Service {
                 }
                 File file = new File(storageDir, filename);
 
-                // Create the file if it doesn't exist
                 if (!file.exists()) {
                     try {
                         if (!file.createNewFile()) {
-                            // Handle file creation failure
                             throw new IOException("Failed to create file");
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
-                        // Handle IOException
                         showToast(getString(R.string.cant_create_file) + file.getAbsolutePath());
                     }
                 }
-                final WavAudioFormat format = new WavAudioFormat.Builder().sampleRate(SAMPLE_RATE).build();
-                try (WavFileWriter writer = new WavFileWriter(format, file)) {
+                try (AudioFileWriter writer = AudioFileWriterFactory.create(outputFormat, SAMPLE_RATE, file)) {
                     try {
                         audioMemory.read(skipBytes, new AudioMemory.Consumer() {
                             @Override
@@ -244,7 +243,6 @@ public class SaidItService extends Service {
                             }
                         });
                     } catch (IOException e) {
-                        // Handle error during file writing
                         showToast(getString(R.string.error_during_writing_history_into) + file.getAbsolutePath());
                         Log.e(TAG, "Error during writing history into " + file.getAbsolutePath(), e);
                     }
@@ -252,7 +250,6 @@ public class SaidItService extends Service {
                         wavFileReceiver.fileReady(file, writer.getTotalSampleBytesWritten() * getBytesToSeconds());
                     }
                 } catch (IOException e) {
-                    // Handle error during file creation or closing writer
                     showToast(getString(R.string.cant_create_file) + file.getAbsolutePath());
                     Log.e(TAG, "Can't create file " + file.getAbsolutePath(), e);
                 }
@@ -293,11 +290,11 @@ public class SaidItService extends Service {
                 long millis  = System.currentTimeMillis() - 1000 * useBytes / FILL_RATE;
                 final int flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_SHOW_DATE;
                 final String dateTime = DateUtils.formatDateTime(SaidItService.this, millis, flags);
-                String filename = "Echo - " + dateTime + ".wav";
+                final OutputFormat outputFormat = getOutputFormat();
+                String filename = "Echo - " + dateTime + "." + outputFormat.extension;
 
                 File storageDir;
                 if(isExternalStorageWritable()){
-                    // Use public storage directory for Android 11+ (min SDK 30)
                     storageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "Echo");
                 }else{
                     storageDir = new File(getFilesDir(), "Echo");
@@ -306,17 +303,16 @@ public class SaidItService extends Service {
 
                 String path = storagePath + "/" + filename;
 
-                wavFile = new File(path);
+                outputFile = new File(path);
                 try {
-                    wavFile.createNewFile();
+                    outputFile.createNewFile();
                 } catch (IOException e) {
                     filename = filename.replace(':', '.');
                     path = storagePath + "/" + filename;
-                    wavFile = new File(path);
+                    outputFile = new File(path);
                 }
-                WavAudioFormat format = new WavAudioFormat.Builder().sampleRate(SAMPLE_RATE).build();
                 try {
-                    wavFileWriter = new WavFileWriter(format, wavFile);
+                    audioFileWriter = AudioFileWriterFactory.create(outputFormat, SAMPLE_RATE, outputFile);
                 } catch (IOException e) {
                     final String errorMessage = getString(R.string.cant_create_file) + path;
                     Toast.makeText(SaidItService.this, errorMessage, Toast.LENGTH_LONG).show();
@@ -331,7 +327,7 @@ public class SaidItService extends Service {
                         audioMemory.read(skipBytes, new AudioMemory.Consumer() {
                             @Override
                             public int consume(byte[] array, int offset, int count) throws IOException {
-                                wavFileWriter.write(array, offset, count);
+                                audioFileWriter.write(array, offset, count);
                                 return 0;
                             }
                         });
@@ -406,14 +402,14 @@ public class SaidItService extends Service {
             public void run() {
                 flushAudioRecord();
                 try {
-                    wavFileWriter.close();
+                    audioFileWriter.close();
                 } catch (IOException e) {
                     Log.e(TAG, "CLOSING ERROR", e);
                 }
                 if(wavFileReceiver != null) {
-                    wavFileReceiver.fileReady(wavFile, wavFileWriter.getTotalSampleBytesWritten() * getBytesToSeconds());
+                    wavFileReceiver.fileReady(outputFile, audioFileWriter.getTotalSampleBytesWritten() * getBytesToSeconds());
                 }
-                wavFileWriter = null;
+                audioFileWriter = null;
             }
         });
 
@@ -449,8 +445,8 @@ public class SaidItService extends Service {
                 Log.e(TAG, "AUDIO RECORD ERROR - UNKNOWN ERROR");
                 return 0;
             }
-            if (wavFileWriter != null && read > 0) {
-                wavFileWriter.write(array, offset, read);
+            if (audioFileWriter != null && read > 0) {
+                audioFileWriter.write(array, offset, read);
             }
             if (read == count) {
                 // We've filled the buffer, so let's read again.
@@ -475,7 +471,7 @@ public class SaidItService extends Service {
             try {
                 audioMemory.fill(filler);
             } catch (IOException e) {
-                final String errorMessage = getString(R.string.error_during_recording_into) + wavFile.getName();
+                final String errorMessage = getString(R.string.error_during_recording_into) + outputFile.getName();
                 Toast.makeText(SaidItService.this, errorMessage, Toast.LENGTH_LONG).show();
                 Log.e(TAG, errorMessage, e);
                 stopRecording(new SaidItFragment.NotifyFileReceiver(SaidItService.this), "");
@@ -500,8 +496,8 @@ public class SaidItService extends Service {
                 final AudioMemory.Stats stats = audioMemory.getStats(FILL_RATE);
                 
                 int recorded = 0;
-                if(wavFileWriter != null) {
-                    recorded += wavFileWriter.getTotalSampleBytesWritten();
+                if(audioFileWriter != null) {
+                    recorded += audioFileWriter.getTotalSampleBytesWritten();
                     recorded += stats.estimation;
                 }
                 final float bytesToSeconds = getBytesToSeconds();
