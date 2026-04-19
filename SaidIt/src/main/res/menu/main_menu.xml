@@ -4,7 +4,8 @@
 
     <item
         android:id="@+id/action_settings"
+        android:icon="@drawable/ic_settings"
         android:title="@string/upper_memory_limit_settings_end"
-        app:showAsAction="never" />
+        app:showAsAction="always" />
 
 </menu>

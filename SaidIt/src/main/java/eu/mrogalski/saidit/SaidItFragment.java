@@ -10,8 +10,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,12 +20,9 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -37,7 +34,10 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
+import android.content.SharedPreferences;
 
 import java.io.File;
 
@@ -49,32 +49,37 @@ public class SaidItFragment extends Fragment {
 
     private static final String TAG = SaidItFragment.class.getSimpleName();
     private static final String YOUR_NOTIFICATION_CHANNEL_ID = "SaidItServiceChannel";
-    private Button listenButton;
+    private com.google.android.material.button.MaterialButton listenToggleButton;
 
     ListenButtonClickListener listenButtonClickListener = new ListenButtonClickListener();
     RecordButtonClickListener recordButtonClickListener = new RecordButtonClickListener();
 
-    private boolean isListening = true;
+    private boolean isListening = false;
     private boolean isRecording = false;
 
     private LinearLayout ready_section;
-    private Button recordLastFiveMinutesButton;
-    private Button recordMaxButton;
-    private Button recordLastMinuteButton;
-    private Button recordLastThirtyMinuteButton;
-    private Button recordLastTwoHrsButton;
-    private Button recordLastSixHrsButton;
     private TextView history_limit;
     private TextView history_size;
-    private TextView history_size_title;
+    private com.google.android.material.progressindicator.LinearProgressIndicator memoryProgress;
+    private com.google.android.material.chip.ChipGroup durationChips;
+    private com.google.android.material.button.MaterialButton saveButton;
+    private float selectedSeconds = 120;
 
     private LinearLayout rec_section;
     private TextView rec_indicator;
     private TextView rec_time;
     private Button record_pause_button;
 
-    private Button rate_on_google_play;
-    private ImageView heart;
+    private View statusDot;
+    private TextView statusLabel;
+    private WaveformView waveform;
+    private final float[] amplitudeSnapshot = new float[32];
+
+    private LinearLayout lastSavedSection;
+    private TextView lastSavedTime;
+    private com.google.android.material.button.MaterialButton lastSavedPlay;
+    private String lastSavedFilePath;
+
 
     @Override
     public void onStart() {
@@ -161,95 +166,76 @@ public class SaidItFragment extends Fragment {
             }
         });
 
+        statusDot = rootView.findViewById(R.id.status_dot);
+        statusLabel = rootView.findViewById(R.id.status_label);
+        waveform = rootView.findViewById(R.id.waveform);
+
         history_limit = rootView.findViewById(R.id.history_limit);
         history_size = rootView.findViewById(R.id.history_size);
-        history_size_title = rootView.findViewById(R.id.history_size_title);
+        memoryProgress = rootView.findViewById(R.id.memory_progress);
 
-        listenButton = rootView.findViewById(R.id.listen_button);
-        if (listenButton != null) {
-            listenButton.setOnClickListener(listenButtonClickListener);
-        }
+        listenToggleButton = rootView.findViewById(R.id.listen_toggle_button);
+        listenToggleButton.setOnClickListener(listenButtonClickListener);
 
         record_pause_button = rootView.findViewById(R.id.rec_stop_button);
         record_pause_button.setOnClickListener(recordButtonClickListener);
 
-        recordLastMinuteButton = rootView.findViewById(R.id.record_last_minute);
-        recordLastMinuteButton.setOnClickListener(recordButtonClickListener);
-        recordLastMinuteButton.setOnLongClickListener(recordButtonClickListener);
+        durationChips = rootView.findViewById(R.id.duration_chips);
+        saveButton = rootView.findViewById(R.id.save_button);
 
-        recordLastFiveMinutesButton = rootView.findViewById(R.id.record_last_5_minutes);
-        recordLastFiveMinutesButton.setOnClickListener(recordButtonClickListener);
-        recordLastFiveMinutesButton.setOnLongClickListener(recordButtonClickListener);
+        durationChips.check(R.id.chip_2m);
+        durationChips.setOnCheckedStateChangeListener(new com.google.android.material.chip.ChipGroup.OnCheckedStateChangeListener() {
+            @Override
+            public void onCheckedChanged(@NonNull com.google.android.material.chip.ChipGroup group, @NonNull java.util.List<Integer> checkedIds) {
+                if (checkedIds.isEmpty()) return;
+                int id = checkedIds.get(0);
+                selectedSeconds = getSecondsForChip(id);
+                updateSaveButtonText();
+            }
+        });
 
-        recordLastThirtyMinuteButton = rootView.findViewById(R.id.record_last_30_minutes);
-        recordLastThirtyMinuteButton.setOnClickListener(recordButtonClickListener);
-        recordLastThirtyMinuteButton.setOnLongClickListener(recordButtonClickListener);
-
-        recordLastTwoHrsButton = rootView.findViewById(R.id.record_last_2_hrs);
-        recordLastTwoHrsButton.setOnClickListener(recordButtonClickListener);
-        recordLastTwoHrsButton.setOnLongClickListener(recordButtonClickListener);
-
-        recordLastSixHrsButton = rootView.findViewById(R.id.record_last_6_hrs);
-        recordLastSixHrsButton.setOnClickListener(recordButtonClickListener);
-        recordLastSixHrsButton.setOnLongClickListener(recordButtonClickListener);
-
-        recordMaxButton = rootView.findViewById(R.id.record_last_max);
-        recordMaxButton.setOnClickListener(recordButtonClickListener);
-        recordMaxButton.setOnLongClickListener(recordButtonClickListener);
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                recordButtonClickListener.recordSeconds(selectedSeconds, false);
+            }
+        });
+        saveButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                recordButtonClickListener.recordSeconds(selectedSeconds, true);
+                return true;
+            }
+        });
 
         ready_section = rootView.findViewById(R.id.ready_section);
         rec_section = rootView.findViewById(R.id.rec_section);
         rec_indicator = rootView.findViewById(R.id.rec_indicator);
         rec_time = rootView.findViewById(R.id.rec_time);
 
-        rate_on_google_play = rootView.findViewById(R.id.rate_on_google_play);
+        lastSavedSection = rootView.findViewById(R.id.last_saved_section);
+        lastSavedTime = rootView.findViewById(R.id.last_saved_time);
+        lastSavedPlay = rootView.findViewById(R.id.last_saved_play);
 
-        final Animation pulse = AnimationUtils.loadAnimation(activity, R.anim.pulse);
-        heart = rootView.findViewById(R.id.heart);
-        heart.startAnimation(pulse);
+        SharedPreferences prefs = activity.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE);
+        lastSavedFilePath = prefs.getString(SaidIt.LAST_SAVED_FILE_KEY, null);
+        if (lastSavedFilePath != null && new File(lastSavedFilePath).exists()) {
+            lastSavedSection.setVisibility(View.VISIBLE);
+            updateLastSavedTime(prefs);
+        }
 
-        rate_on_google_play.setOnClickListener(new View.OnClickListener() {
+        lastSavedPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/mafik/echo")));
-                } catch (android.content.ActivityNotFoundException anfe) {
-                    // ignore
-                }
-            }
-        });
-
-        heart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                heart.animate().scaleX(10).scaleY(10).alpha(0).setDuration(2000).start();
-                Handler handler = new Handler(activity.getMainLooper());
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/mafik")));
-                        } catch (android.content.ActivityNotFoundException anfe) {
-                            // ignore
-                        }
-                    }
-                }, 1000);
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        heart.setAlpha(0f);
-                        heart.setScaleX(1);
-                        heart.setScaleY(1);
-                        heart.animate().alpha(1).start();
-                    }
-                }, 3000);
-            }
-        });
-
-        rootView.findViewById(R.id.settings_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(activity, SettingsActivity.class));
+                if (lastSavedFilePath == null) return;
+                File file = new File(lastSavedFilePath);
+                if (!file.exists()) return;
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
+                intent.setDataAndType(fileUri, "audio/*");
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
             }
         });
 
@@ -272,9 +258,20 @@ public class SaidItFragment extends Fragment {
                 if (listeningEnabled != isListening) {
                     isListening = listeningEnabled;
                     if (listeningEnabled) {
-                        listenButton.setText(R.string.listening_enabled_disable);
+                        statusLabel.setText(R.string.listening_enabled_disable);
+                        listenToggleButton.setText(R.string.stop);
+                        listenToggleButton.setIconResource(R.drawable.ic_stop);
+                        waveform.setBarColor(MaterialColors.getColor(waveform, com.google.android.material.R.attr.colorPrimary));
+                        waveform.setActive(true);
+                        GradientDrawable dot = (GradientDrawable) statusDot.getBackground();
+                        dot.setColor(MaterialColors.getColor(statusDot, com.google.android.material.R.attr.colorPrimary));
                     } else {
-                        listenButton.setText(R.string.listening_disabled_enable);
+                        statusLabel.setText(R.string.listening_disabled_enable);
+                        listenToggleButton.setText(R.string.listen_start);
+                        listenToggleButton.setIconResource(R.drawable.ic_play_arrow);
+                        waveform.setActive(false);
+                        GradientDrawable dot = (GradientDrawable) statusDot.getBackground();
+                        dot.setColor(MaterialColors.getColor(statusDot, com.google.android.material.R.attr.colorOutline));
                     }
                 }
 
@@ -285,25 +282,31 @@ public class SaidItFragment extends Fragment {
                 }
             }
 
-            TimeFormat.naturalLanguage(resources, totalMemory, timeFormatResult);
-
-            if (!history_limit.getText().equals(timeFormatResult.text)) {
-                history_limit.setText(timeFormatResult.text);
+            String sizeText = TimeFormat.shortTimer(memorized);
+            String limitText = TimeFormat.shortTimer(totalMemory);
+            if (!sizeText.equals(history_size.getText().toString())) {
+                history_size.setText(sizeText);
             }
-
-            TimeFormat.naturalLanguage(resources, memorized, timeFormatResult);
-
-            if (!history_size.getText().equals(timeFormatResult.text)) {
-                history_size_title.setText(resources.getQuantityText(R.plurals.history_size_title, timeFormatResult.count));
-                history_size.setText(timeFormatResult.text);
-                recordMaxButton.setText(TimeFormat.shortTimer(memorized));
+            if (!limitText.equals(history_limit.getText().toString())) {
+                history_limit.setText(limitText);
             }
+            int progress = totalMemory > 0 ? (int) (memorized / totalMemory * 100) : 0;
+            memoryProgress.setProgress(progress);
 
             TimeFormat.naturalLanguage(resources, recorded, timeFormatResult);
 
             if (!rec_time.getText().equals(timeFormatResult.text)) {
                 rec_indicator.setText(resources.getQuantityText(R.plurals.recorded, timeFormatResult.count));
                 rec_time.setText(timeFormatResult.text);
+            }
+
+            if (echo != null && isListening) {
+                echo.getAmplitudes(amplitudeSnapshot);
+                waveform.setAmplitudes(amplitudeSnapshot);
+            }
+
+            if (lastSavedFilePath != null && activity != null) {
+                updateLastSavedTime(activity.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE));
             }
 
             history_size.postOnAnimationDelayed(updater, 100);
@@ -328,7 +331,17 @@ public class SaidItFragment extends Fragment {
                 @Override
                 public void state(final boolean listeningEnabled, boolean recording, float memorized, float totalMemory, float recorded) {
                     if (listeningEnabled) {
-                        echo.disableListening();
+                        new MaterialAlertDialogBuilder(getActivity())
+                            .setTitle(R.string.stop_echo_title)
+                            .setMessage(R.string.stop_echo_message)
+                            .setPositiveButton(R.string.stop, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface d, int which) {
+                                    echo.disableListening();
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .show();
                     } else {
                         dialog.show(getParentFragmentManager(), "Preparing memory");
 
@@ -350,20 +363,10 @@ public class SaidItFragment extends Fragment {
         }
     }
 
-    private class RecordButtonClickListener implements View.OnClickListener, View.OnLongClickListener {
+    private class RecordButtonClickListener implements View.OnClickListener {
 
         @Override
         public void onClick(final View v) {
-            record(v, false);
-        }
-
-        @Override
-        public boolean onLongClick(final View v) {
-            record(v, true);
-            return true;
-        }
-
-        public void record(final View button, final boolean keepRecording) {
             echo.getState(new SaidItService.StateCallback() {
                 @Override
                 public void state(final boolean listeningEnabled, final boolean recording, float memorized, float totalMemory, float recorded) {
@@ -371,40 +374,7 @@ public class SaidItFragment extends Fragment {
                         @Override
                         public void run() {
                             if (recording) {
-                                echo.stopRecording(new PromptFileReceiver(getActivity()),"");
-                            } else {
-                                @SuppressLint("ValidFragment")
-                                final WorkingDialog pd = new WorkingDialog();
-                                pd.setDescriptionStringId(R.string.work_default);
-                                pd.show(getParentFragmentManager(), "Recording");
-                                final float seconds = getPrependedSeconds(button);
-                                if (keepRecording) {
-                                    echo.startRecording(seconds);
-                                } else {
-                                    View dialogView = View.inflate(getActivity(), R.layout.dialog_save_recording, null);
-                                    EditText fileName = dialogView.findViewById(R.id.recording_name);
-                                    TextView extensionLabel = dialogView.findViewById(R.id.recording_extension);
-                                    String formatPref = getActivity().getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE)
-                                            .getString(SaidIt.OUTPUT_FORMAT_KEY, "WAV");
-                                    OutputFormat outputFormat = OutputFormat.fromPreference(formatPref);
-                                    extensionLabel.setText("." + outputFormat.extension);
-                                    long startMillis = System.currentTimeMillis() - (long)(seconds * 1000);
-                                    int flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_SHOW_DATE;
-                                    String defaultName = "Echo - " + DateUtils.formatDateTime(getActivity(), startMillis, flags);
-                                    fileName.setText(defaultName);
-                                    fileName.selectAll();
-                                    new MaterialAlertDialogBuilder(getActivity())
-                                        .setView(dialogView)
-                                        .setPositiveButton("Save", new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                echo.dumpRecording(seconds, new PromptFileReceiver(getActivity()), fileName.getText().toString());
-                                            }
-                                        })
-                                        .setNegativeButton("Cancel", null)
-                                        .show();
-                                    pd.dismiss();
-                                }
+                                echo.stopRecording(new PromptFileReceiver(getActivity()), "");
                             }
                         }
                     });
@@ -412,23 +382,106 @@ public class SaidItFragment extends Fragment {
             });
         }
 
-        float getPrependedSeconds(View button) {
-            switch (button.getId()) {
-                case R.id.record_last_minute:
-                    return 60;
-                case R.id.record_last_5_minutes:
-                    return 60 * 5;
-                case R.id.record_last_30_minutes:
-                    return 60 * 30;
-                case R.id.record_last_2_hrs:
-                    return 60 * 60 * 2;
-                case R.id.record_last_6_hrs:
-                    return 60 * 60 * 6;
-                case R.id.record_last_max:
-                    return 60 * 60 * 24 * 365;
-            }
-            return 0;
+        public void recordSeconds(final float seconds, final boolean keepRecording) {
+            echo.getState(new SaidItService.StateCallback() {
+                @Override
+                public void state(final boolean listeningEnabled, final boolean recording, float memorized, float totalMemory, float recorded) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (recording) {
+                                echo.stopRecording(new PromptFileReceiver(getActivity()), "");
+                                return;
+                            }
+                            if (keepRecording) {
+                                @SuppressLint("ValidFragment")
+                                final WorkingDialog pd = new WorkingDialog();
+                                pd.setDescriptionStringId(R.string.work_default);
+                                pd.show(getParentFragmentManager(), "Recording");
+                                echo.startRecording(seconds);
+                            } else {
+                                View dialogView = View.inflate(getActivity(), R.layout.dialog_save_recording, null);
+                                EditText fileName = dialogView.findViewById(R.id.recording_name);
+                                TextView extensionLabel = dialogView.findViewById(R.id.recording_extension);
+                                String formatPref = getActivity().getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE)
+                                        .getString(SaidIt.OUTPUT_FORMAT_KEY, "WAV");
+                                OutputFormat outputFormat = OutputFormat.fromPreference(formatPref);
+                                extensionLabel.setText("." + outputFormat.extension);
+                                long startMillis = System.currentTimeMillis() - (long)(seconds * 1000);
+                                int flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_SHOW_DATE;
+                                String defaultName = "Echo - " + DateUtils.formatDateTime(getActivity(), startMillis, flags);
+                                fileName.setText(defaultName);
+                                fileName.selectAll();
+                                new MaterialAlertDialogBuilder(getActivity())
+                                    .setView(dialogView)
+                                    .setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            echo.dumpRecording(seconds, new PromptFileReceiver(getActivity()), fileName.getText().toString());
+                                        }
+                                    })
+                                    .setNegativeButton("Cancel", null)
+                                    .show();
+                            }
+                        }
+                    });
+                }
+            });
         }
+    }
+
+    private float getSecondsForChip(int chipId) {
+        if (chipId == R.id.chip_30s) return 30;
+        if (chipId == R.id.chip_2m) return 120;
+        if (chipId == R.id.chip_5m) return 300;
+        if (chipId == R.id.chip_30m) return 1800;
+        if (chipId == R.id.chip_max) return 60 * 60 * 24 * 365;
+        return 120;
+    }
+
+    private String getLabelForChip(int chipId) {
+        if (chipId == R.id.chip_30s) return "30s";
+        if (chipId == R.id.chip_2m) return "2 min";
+        if (chipId == R.id.chip_5m) return "5 min";
+        if (chipId == R.id.chip_30m) return "30 min";
+        if (chipId == R.id.chip_max) return "all";
+        return "2 min";
+    }
+
+    private void updateSaveButtonText() {
+        int checkedId = durationChips.getCheckedChipId();
+        String label = getLabelForChip(checkedId);
+        saveButton.setText(getString(R.string.save_last_format, label));
+    }
+
+    private void updateLastSavedTime(SharedPreferences prefs) {
+        long savedTime = prefs.getLong(SaidIt.LAST_SAVED_TIME_KEY, 0);
+        if (savedTime == 0) return;
+        long elapsed = System.currentTimeMillis() - savedTime;
+        if (elapsed < 60_000) {
+            lastSavedTime.setText(R.string.last_saved_just_now);
+        } else {
+            CharSequence relative = DateUtils.getRelativeTimeSpanString(savedTime, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
+            lastSavedTime.setText(relative);
+        }
+    }
+
+    private void onFileSaved(final File file) {
+        final Activity activity = getActivity();
+        if (activity == null) return;
+        SharedPreferences prefs = activity.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE);
+        prefs.edit()
+            .putString(SaidIt.LAST_SAVED_FILE_KEY, file.getAbsolutePath())
+            .putLong(SaidIt.LAST_SAVED_TIME_KEY, System.currentTimeMillis())
+            .apply();
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                lastSavedFilePath = file.getAbsolutePath();
+                lastSavedSection.setVisibility(View.VISIBLE);
+                updateLastSavedTime(activity.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE));
+            }
+        });
     }
 
     static Notification buildNotificationForFile(Context context, File outFile) {
@@ -471,7 +524,7 @@ public class SaidItFragment extends Fragment {
         }
     }
 
-    static class PromptFileReceiver implements SaidItService.WavFileReceiver {
+    class PromptFileReceiver implements SaidItService.WavFileReceiver {
 
         private Activity activity;
 
@@ -481,6 +534,7 @@ public class SaidItFragment extends Fragment {
 
         @Override
         public void fileReady(final File file, float runtime) {
+            onFileSaved(file);
             new RecordingDoneDialog()
                     .setFile(file)
                     .setRuntime(runtime)
