@@ -1,6 +1,5 @@
 package eu.mrogalski.saidit;
 
-import android.app.TimePickerDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -14,7 +13,6 @@ import android.os.IBinder;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.TextView;
-import android.widget.TimePicker;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,6 +21,7 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.timepicker.MaterialTimePicker;
 
 import eu.mrogalski.StringFormat;
 import eu.mrogalski.android.TimeFormat;
@@ -238,19 +237,26 @@ public class SettingsActivity extends AppCompatActivity {
                 SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
                 int hour = prefs.getInt(SaidIt.SCHEDULE_START_HOUR_KEY, 8);
                 int minute = prefs.getInt(SaidIt.SCHEDULE_START_MINUTE_KEY, 0);
-                new TimePickerDialog(SettingsActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                MaterialTimePicker picker = new MaterialTimePicker.Builder()
+                        .setTimeFormat(com.google.android.material.timepicker.TimeFormat.CLOCK_24H)
+                        .setHour(hour)
+                        .setMinute(minute)
+                        .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
+                        .build();
+                picker.addOnPositiveButtonClickListener(new View.OnClickListener() {
                     @Override
-                    public void onTimeSet(TimePicker view, int hourOfDay, int minuteOfHour) {
+                    public void onClick(View v) {
                         getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE).edit()
-                                .putInt(SaidIt.SCHEDULE_START_HOUR_KEY, hourOfDay)
-                                .putInt(SaidIt.SCHEDULE_START_MINUTE_KEY, minuteOfHour)
+                                .putInt(SaidIt.SCHEDULE_START_HOUR_KEY, picker.getHour())
+                                .putInt(SaidIt.SCHEDULE_START_MINUTE_KEY, picker.getMinute())
                                 .apply();
                         syncScheduleUI();
                         if (service != null) {
                             service.applySchedule();
                         }
                     }
-                }, hour, minute, true).show();
+                });
+                picker.show(getSupportFragmentManager(), "start_time");
             }
         });
 
@@ -260,19 +266,26 @@ public class SettingsActivity extends AppCompatActivity {
                 SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
                 int hour = prefs.getInt(SaidIt.SCHEDULE_END_HOUR_KEY, 23);
                 int minute = prefs.getInt(SaidIt.SCHEDULE_END_MINUTE_KEY, 0);
-                new TimePickerDialog(SettingsActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                MaterialTimePicker picker = new MaterialTimePicker.Builder()
+                        .setTimeFormat(com.google.android.material.timepicker.TimeFormat.CLOCK_24H)
+                        .setHour(hour)
+                        .setMinute(minute)
+                        .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
+                        .build();
+                picker.addOnPositiveButtonClickListener(new View.OnClickListener() {
                     @Override
-                    public void onTimeSet(TimePicker view, int hourOfDay, int minuteOfHour) {
+                    public void onClick(View v) {
                         getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE).edit()
-                                .putInt(SaidIt.SCHEDULE_END_HOUR_KEY, hourOfDay)
-                                .putInt(SaidIt.SCHEDULE_END_MINUTE_KEY, minuteOfHour)
+                                .putInt(SaidIt.SCHEDULE_END_HOUR_KEY, picker.getHour())
+                                .putInt(SaidIt.SCHEDULE_END_MINUTE_KEY, picker.getMinute())
                                 .apply();
                         syncScheduleUI();
                         if (service != null) {
                             service.applySchedule();
                         }
                     }
-                }, hour, minute, true).show();
+                });
+                picker.show(getSupportFragmentManager(), "end_time");
             }
         });
 
