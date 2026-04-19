@@ -10,8 +10,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -34,6 +34,8 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
@@ -46,12 +48,12 @@ public class SaidItFragment extends Fragment {
 
     private static final String TAG = SaidItFragment.class.getSimpleName();
     private static final String YOUR_NOTIFICATION_CHANNEL_ID = "SaidItServiceChannel";
-    private Button listenButton;
+    private com.google.android.material.button.MaterialButton listenToggleButton;
 
     ListenButtonClickListener listenButtonClickListener = new ListenButtonClickListener();
     RecordButtonClickListener recordButtonClickListener = new RecordButtonClickListener();
 
-    private boolean isListening = true;
+    private boolean isListening = false;
     private boolean isRecording = false;
 
     private LinearLayout ready_section;
@@ -70,6 +72,11 @@ public class SaidItFragment extends Fragment {
     private TextView rec_time;
     private Button record_pause_button;
 
+    private MaterialCardView statusCard;
+    private View statusDot;
+    private TextView statusLabel;
+    private WaveformView waveform;
+    private final float[] amplitudeSnapshot = new float[32];
 
 
     @Override
@@ -157,14 +164,17 @@ public class SaidItFragment extends Fragment {
             }
         });
 
+        statusCard = rootView.findViewById(R.id.status_card);
+        statusDot = rootView.findViewById(R.id.status_dot);
+        statusLabel = rootView.findViewById(R.id.status_label);
+        waveform = rootView.findViewById(R.id.waveform);
+
         history_limit = rootView.findViewById(R.id.history_limit);
         history_size = rootView.findViewById(R.id.history_size);
         history_size_title = rootView.findViewById(R.id.history_size_title);
 
-        listenButton = rootView.findViewById(R.id.listen_button);
-        if (listenButton != null) {
-            listenButton.setOnClickListener(listenButtonClickListener);
-        }
+        listenToggleButton = rootView.findViewById(R.id.listen_toggle_button);
+        listenToggleButton.setOnClickListener(listenButtonClickListener);
 
         record_pause_button = rootView.findViewById(R.id.rec_stop_button);
         record_pause_button.setOnClickListener(recordButtonClickListener);
@@ -217,9 +227,22 @@ public class SaidItFragment extends Fragment {
                 if (listeningEnabled != isListening) {
                     isListening = listeningEnabled;
                     if (listeningEnabled) {
-                        listenButton.setText(R.string.listening_enabled_disable);
+                        statusLabel.setText(R.string.listening_enabled_disable);
+                        listenToggleButton.setIconResource(R.drawable.ic_stop);
+                        listenToggleButton.setIconTint(android.content.res.ColorStateList.valueOf(MaterialColors.getColor(listenToggleButton, com.google.android.material.R.attr.colorOnPrimaryContainer)));
+                        statusCard.setCardBackgroundColor(MaterialColors.getColor(statusCard, com.google.android.material.R.attr.colorPrimaryContainer));
+                        waveform.setBarColor(MaterialColors.getColor(waveform, com.google.android.material.R.attr.colorPrimary));
+                        waveform.setActive(true);
+                        GradientDrawable dot = (GradientDrawable) statusDot.getBackground();
+                        dot.setColor(MaterialColors.getColor(statusDot, com.google.android.material.R.attr.colorPrimary));
                     } else {
-                        listenButton.setText(R.string.listening_disabled_enable);
+                        statusLabel.setText(R.string.listening_disabled_enable);
+                        listenToggleButton.setIconResource(R.drawable.ic_play_arrow);
+                        listenToggleButton.setIconTint(android.content.res.ColorStateList.valueOf(MaterialColors.getColor(listenToggleButton, com.google.android.material.R.attr.colorOnSurfaceVariant)));
+                        statusCard.setCardBackgroundColor(MaterialColors.getColor(statusCard, com.google.android.material.R.attr.colorSurfaceContainerHigh));
+                        waveform.setActive(false);
+                        GradientDrawable dot = (GradientDrawable) statusDot.getBackground();
+                        dot.setColor(MaterialColors.getColor(statusDot, com.google.android.material.R.attr.colorOutline));
                     }
                 }
 
@@ -251,6 +274,11 @@ public class SaidItFragment extends Fragment {
                 rec_time.setText(timeFormatResult.text);
             }
 
+            if (echo != null && isListening) {
+                echo.getAmplitudes(amplitudeSnapshot);
+                waveform.setAmplitudes(amplitudeSnapshot);
+            }
+
             history_size.postOnAnimationDelayed(updater, 100);
         }
     };
@@ -273,7 +301,17 @@ public class SaidItFragment extends Fragment {
                 @Override
                 public void state(final boolean listeningEnabled, boolean recording, float memorized, float totalMemory, float recorded) {
                     if (listeningEnabled) {
-                        echo.disableListening();
+                        new MaterialAlertDialogBuilder(getActivity())
+                            .setTitle(R.string.stop_echo_title)
+                            .setMessage(R.string.stop_echo_message)
+                            .setPositiveButton(R.string.stop, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface d, int which) {
+                                    echo.disableListening();
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .show();
                     } else {
                         dialog.show(getParentFragmentManager(), "Preparing memory");
 

@@ -42,6 +42,9 @@ public class SaidItService extends Service {
     volatile int SAMPLE_RATE;
     volatile int FILL_RATE;
 
+    private static final int AMPLITUDE_BUFFER_SIZE = 32;
+    private final float[] amplitudeBuffer = new float[AMPLITUDE_BUFFER_SIZE];
+    private int amplitudeIndex = 0;
 
     File outputFile;
     AudioRecord audioRecord; // used only in the audio thread
@@ -443,6 +446,25 @@ public class SaidItService extends Service {
                 Log.e(TAG, "AUDIO RECORD ERROR - UNKNOWN ERROR");
                 return 0;
             }
+            if (read > 0) {
+                int samplesPerBar = read / 2 / AMPLITUDE_BUFFER_SIZE;
+                if (samplesPerBar > 0) {
+                    for (int bar = 0; bar < AMPLITUDE_BUFFER_SIZE; bar++) {
+                        long sumSquares = 0;
+                        int start = offset + bar * samplesPerBar * 2;
+                        for (int s = 0; s < samplesPerBar; s++) {
+                            int idx = start + s * 2;
+                            short sample = (short) ((array[idx] & 0xff) | (array[idx + 1] << 8));
+                            sumSquares += (long) sample * sample;
+                        }
+                        float rms = (float) Math.sqrt((double) sumSquares / samplesPerBar) / 32768f;
+                        synchronized (amplitudeBuffer) {
+                            amplitudeBuffer[amplitudeIndex] = rms;
+                            amplitudeIndex = (amplitudeIndex + 1) % AMPLITUDE_BUFFER_SIZE;
+                        }
+                    }
+                }
+            }
             if (audioFileWriter != null && read > 0) {
                 audioFileWriter.write(array, offset, read);
             }
@@ -511,6 +533,14 @@ public class SaidItService extends Service {
                 });
             }
         });
+    }
+
+    public void getAmplitudes(float[] out) {
+        synchronized (amplitudeBuffer) {
+            for (int i = 0; i < AMPLITUDE_BUFFER_SIZE; i++) {
+                out[i] = amplitudeBuffer[(amplitudeIndex + i) % AMPLITUDE_BUFFER_SIZE];
+            }
+        }
     }
 
     public float getBytesToSeconds() {

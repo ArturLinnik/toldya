@@ -98,6 +98,11 @@
     <string name="recording_done_runtime">Length:</string>
     <string name="recording_done_size">Size:</string>
 
+    <string name="stop_echo_title">Stop Echo?</string>
+    <string name="stop_echo_message">Echo will stop listening and all buffered audio will be lost.</string>
+    <string name="stop">Stop</string>
+    <string name="cancel">Cancel</string>
+
     <string name="press_back_to_cancel">Press "back" to cancel</string>
     <string name="send">Send</string>
     <string name="open">Open</string>

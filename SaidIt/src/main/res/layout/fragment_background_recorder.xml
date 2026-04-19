@@ -52,20 +52,49 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/listen_button"
-                        style="@style/Widget.Material3.Button"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/listening_enabled_disable" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                    <TextView
+                        <View
+                            android:id="@+id/status_dot"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:background="@drawable/status_dot" />
+
+                        <TextView
+                            android:id="@+id/status_label"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:text="@string/listening_enabled_disable"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="?attr/colorOnPrimaryContainer" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/listen_toggle_button"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:insetLeft="0dp"
+                            android:insetRight="0dp"
+                            app:icon="@drawable/ic_stop"
+                            app:iconTint="?attr/colorOnPrimaryContainer"
+                            app:iconSize="20dp" />
+
+                    </LinearLayout>
+
+                    <eu.mrogalski.saidit.WaveformView
+                        android:id="@+id/waveform"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="@string/listening_description"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:textColor="?attr/colorOnPrimaryContainer" />
+                        android:layout_height="40dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="8dp" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
