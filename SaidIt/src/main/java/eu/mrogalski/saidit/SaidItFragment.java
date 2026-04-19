@@ -37,6 +37,8 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import android.content.SharedPreferences;
+
 import java.io.File;
 
 import android.text.format.DateUtils;
@@ -72,6 +74,11 @@ public class SaidItFragment extends Fragment {
     private TextView statusLabel;
     private WaveformView waveform;
     private final float[] amplitudeSnapshot = new float[32];
+
+    private LinearLayout lastSavedSection;
+    private TextView lastSavedTime;
+    private com.google.android.material.button.MaterialButton lastSavedPlay;
+    private String lastSavedFilePath;
 
 
     @Override
@@ -206,6 +213,32 @@ public class SaidItFragment extends Fragment {
         rec_indicator = rootView.findViewById(R.id.rec_indicator);
         rec_time = rootView.findViewById(R.id.rec_time);
 
+        lastSavedSection = rootView.findViewById(R.id.last_saved_section);
+        lastSavedTime = rootView.findViewById(R.id.last_saved_time);
+        lastSavedPlay = rootView.findViewById(R.id.last_saved_play);
+
+        SharedPreferences prefs = activity.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE);
+        lastSavedFilePath = prefs.getString(SaidIt.LAST_SAVED_FILE_KEY, null);
+        if (lastSavedFilePath != null && new File(lastSavedFilePath).exists()) {
+            lastSavedSection.setVisibility(View.VISIBLE);
+            updateLastSavedTime(prefs);
+        }
+
+        lastSavedPlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (lastSavedFilePath == null) return;
+                File file = new File(lastSavedFilePath);
+                if (!file.exists()) return;
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                Uri fileUri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
+                intent.setDataAndType(fileUri, "audio/*");
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+        });
+
         serviceStateCallback.state(isListening, isRecording, 0, 0, 0);
         return rootView;
     }
@@ -270,6 +303,10 @@ public class SaidItFragment extends Fragment {
             if (echo != null && isListening) {
                 echo.getAmplitudes(amplitudeSnapshot);
                 waveform.setAmplitudes(amplitudeSnapshot);
+            }
+
+            if (lastSavedFilePath != null && activity != null) {
+                updateLastSavedTime(activity.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE));
             }
 
             history_size.postOnAnimationDelayed(updater, 100);
@@ -417,6 +454,36 @@ public class SaidItFragment extends Fragment {
         saveButton.setText(getString(R.string.save_last_format, label));
     }
 
+    private void updateLastSavedTime(SharedPreferences prefs) {
+        long savedTime = prefs.getLong(SaidIt.LAST_SAVED_TIME_KEY, 0);
+        if (savedTime == 0) return;
+        long elapsed = System.currentTimeMillis() - savedTime;
+        if (elapsed < 60_000) {
+            lastSavedTime.setText(R.string.last_saved_just_now);
+        } else {
+            CharSequence relative = DateUtils.getRelativeTimeSpanString(savedTime, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
+            lastSavedTime.setText(relative);
+        }
+    }
+
+    private void onFileSaved(final File file) {
+        final Activity activity = getActivity();
+        if (activity == null) return;
+        SharedPreferences prefs = activity.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE);
+        prefs.edit()
+            .putString(SaidIt.LAST_SAVED_FILE_KEY, file.getAbsolutePath())
+            .putLong(SaidIt.LAST_SAVED_TIME_KEY, System.currentTimeMillis())
+            .apply();
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                lastSavedFilePath = file.getAbsolutePath();
+                lastSavedSection.setVisibility(View.VISIBLE);
+                updateLastSavedTime(activity.getSharedPreferences(SaidIt.PACKAGE_NAME, Context.MODE_PRIVATE));
+            }
+        });
+    }
+
     static Notification buildNotificationForFile(Context context, File outFile) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         Uri fileUri = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".provider", outFile);
@@ -457,7 +524,7 @@ public class SaidItFragment extends Fragment {
         }
     }
 
-    static class PromptFileReceiver implements SaidItService.WavFileReceiver {
+    class PromptFileReceiver implements SaidItService.WavFileReceiver {
 
         private Activity activity;
 
@@ -467,6 +534,7 @@ public class SaidItFragment extends Fragment {
 
         @Override
         public void fileReady(final File file, float runtime) {
+            onFileSaved(file);
             new RecordingDoneDialog()
                     .setFile(file)
                     .setRuntime(runtime)

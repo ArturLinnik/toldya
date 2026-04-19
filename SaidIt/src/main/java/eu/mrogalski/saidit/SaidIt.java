@@ -12,6 +12,8 @@ public class SaidIt {
     static final String SCHEDULE_START_MINUTE_KEY = "schedule_start_minute";
     static final String SCHEDULE_END_HOUR_KEY = "schedule_end_hour";
     static final String SCHEDULE_END_MINUTE_KEY = "schedule_end_minute";
+    static final String LAST_SAVED_FILE_KEY = "last_saved_file";
+    static final String LAST_SAVED_TIME_KEY = "last_saved_time";
     static final String SKU = "unlimited_history";
     static final String BASE64_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlD0FMFGp4AWzjW" +
             "LTsUZgm0soga0mVVNGFj0qoATaoQCE/LamF7yrMCIFm9sEOB1guCEhzdr16sjysrVc2EPRisS83FoJ4K0R8" +

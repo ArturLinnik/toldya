@@ -57,6 +57,11 @@
     <string name="save_last_default">Save last 2 min</string>
     <string name="save_last_format">Save last %s</string>
 
+    <string name="section_last_saved">Last saved</string>
+    <string name="last_saved_ago">%s ago</string>
+    <string name="last_saved_just_now">Just now</string>
+    <string name="no_recordings_yet">No recordings yet</string>
+
     <string name="upper_memory_limit_start">Memory is limited at</string>
     <string name="upper_memory_limit_settings_start">You can change it by altering</string>
     <string name="upper_memory_limit_settings_end">settings.</string>
