@@ -2,28 +2,22 @@ package eu.mrogalski.saidit;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.Fragment;
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
-import android.graphics.Typeface;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -31,29 +25,30 @@ import android.view.animation.AnimationUtils;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.FileProvider;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
 
 import android.text.format.DateUtils;
 
 import eu.mrogalski.android.TimeFormat;
-import eu.mrogalski.android.Views;
 
 public class SaidItFragment extends Fragment {
 
     private static final String TAG = SaidItFragment.class.getSimpleName();
     private static final String YOUR_NOTIFICATION_CHANNEL_ID = "SaidItServiceChannel";
-    private Button record_pause_button;
     private Button listenButton;
 
     ListenButtonClickListener listenButtonClickListener = new ListenButtonClickListener();
@@ -76,8 +71,9 @@ public class SaidItFragment extends Fragment {
     private LinearLayout rec_section;
     private TextView rec_indicator;
     private TextView rec_time;
+    private Button record_pause_button;
 
-    private ImageButton rate_on_google_play;
+    private Button rate_on_google_play;
     private ImageView heart;
 
     @Override
@@ -144,101 +140,72 @@ public class SaidItFragment extends Fragment {
         }
     };
 
-    public int getStatusBarHeight() {
-        int result = 0;
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = getResources().getDimensionPixelSize(resourceId);
-        }
-        return result;
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         View rootView = inflater.inflate(R.layout.fragment_background_recorder, container, false);
-
         if (rootView == null) return null;
 
         final Activity activity = getActivity();
-        final AssetManager assets = activity.getAssets();
-        final Typeface robotoCondensedBold = Typeface.createFromAsset(assets, "RobotoCondensedBold.ttf");
-        final Typeface robotoCondensedRegular = Typeface.createFromAsset(assets, "RobotoCondensed-Regular.ttf");
-        final float density = activity.getResources().getDisplayMetrics().density;
 
-        Views.search((ViewGroup) rootView, new Views.SearchViewCallback() {
+        Toolbar toolbar = rootView.findViewById(R.id.toolbar);
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
-            public void onView(View view, ViewGroup parent) {
-
-                if (view instanceof Button) {
-                    final Button button = (Button) view;
-                    button.setTypeface(robotoCondensedBold);
-                    final int shadowColor = button.getShadowColor();
-                    button.setShadowLayer(0.01f, 0, density * 2, shadowColor);
-                } else if (view instanceof TextView) {
-
-                    final TextView textView = (TextView) view;
-                    textView.setTypeface(robotoCondensedRegular);
+            public boolean onMenuItemClick(MenuItem item) {
+                if (item.getItemId() == R.id.action_settings) {
+                    startActivity(new Intent(activity, SettingsActivity.class));
+                    return true;
                 }
+                return false;
             }
         });
 
-        history_limit = (TextView) rootView.findViewById(R.id.history_limit);
-        history_size = (TextView) rootView.findViewById(R.id.history_size);
-        history_size_title = (TextView) rootView.findViewById(R.id.history_size_title);
+        history_limit = rootView.findViewById(R.id.history_limit);
+        history_size = rootView.findViewById(R.id.history_size);
+        history_size_title = rootView.findViewById(R.id.history_size_title);
 
-        history_limit.setTypeface(robotoCondensedBold);
-        history_size.setTypeface(robotoCondensedBold);
-
-        listenButton = (Button) rootView.findViewById(R.id.listen_button);
+        listenButton = rootView.findViewById(R.id.listen_button);
         if (listenButton != null) {
             listenButton.setOnClickListener(listenButtonClickListener);
         }
 
-        final int statusBarHeight = getStatusBarHeight();
-        listenButton.setPadding(listenButton.getPaddingLeft(), listenButton.getPaddingTop() + statusBarHeight, listenButton.getPaddingRight(), listenButton.getPaddingBottom());
-        final ViewGroup.LayoutParams layoutParams = listenButton.getLayoutParams();
-        layoutParams.height += statusBarHeight;
-        listenButton.setLayoutParams(layoutParams);
-
-
-        record_pause_button = (Button) rootView.findViewById(R.id.rec_stop_button);
+        record_pause_button = rootView.findViewById(R.id.rec_stop_button);
         record_pause_button.setOnClickListener(recordButtonClickListener);
 
-        recordLastMinuteButton = (Button) rootView.findViewById(R.id.record_last_minute);
+        recordLastMinuteButton = rootView.findViewById(R.id.record_last_minute);
         recordLastMinuteButton.setOnClickListener(recordButtonClickListener);
         recordLastMinuteButton.setOnLongClickListener(recordButtonClickListener);
 
-        recordLastFiveMinutesButton = (Button) rootView.findViewById(R.id.record_last_5_minutes);
+        recordLastFiveMinutesButton = rootView.findViewById(R.id.record_last_5_minutes);
         recordLastFiveMinutesButton.setOnClickListener(recordButtonClickListener);
         recordLastFiveMinutesButton.setOnLongClickListener(recordButtonClickListener);
 
-        recordLastThirtyMinuteButton = (Button) rootView.findViewById(R.id.record_last_30_minutes);
+        recordLastThirtyMinuteButton = rootView.findViewById(R.id.record_last_30_minutes);
         recordLastThirtyMinuteButton.setOnClickListener(recordButtonClickListener);
         recordLastThirtyMinuteButton.setOnLongClickListener(recordButtonClickListener);
 
-        recordLastTwoHrsButton = (Button) rootView.findViewById(R.id.record_last_2_hrs);
+        recordLastTwoHrsButton = rootView.findViewById(R.id.record_last_2_hrs);
         recordLastTwoHrsButton.setOnClickListener(recordButtonClickListener);
         recordLastTwoHrsButton.setOnLongClickListener(recordButtonClickListener);
 
-        recordLastSixHrsButton = (Button) rootView.findViewById(R.id.record_last_6_hrs);
+        recordLastSixHrsButton = rootView.findViewById(R.id.record_last_6_hrs);
         recordLastSixHrsButton.setOnClickListener(recordButtonClickListener);
         recordLastSixHrsButton.setOnLongClickListener(recordButtonClickListener);
 
-        recordMaxButton = (Button) rootView.findViewById(R.id.record_last_max);
+        recordMaxButton = rootView.findViewById(R.id.record_last_max);
         recordMaxButton.setOnClickListener(recordButtonClickListener);
         recordMaxButton.setOnLongClickListener(recordButtonClickListener);
 
-        ready_section = (LinearLayout) rootView.findViewById(R.id.ready_section);
-        rec_section = (LinearLayout) rootView.findViewById(R.id.rec_section);
-        rec_indicator = (TextView) rootView.findViewById(R.id.rec_indicator);
-        rec_time = (TextView) rootView.findViewById(R.id.rec_time);
+        ready_section = rootView.findViewById(R.id.ready_section);
+        rec_section = rootView.findViewById(R.id.rec_section);
+        rec_indicator = rootView.findViewById(R.id.rec_indicator);
+        rec_time = rootView.findViewById(R.id.rec_time);
 
-        rate_on_google_play = (ImageButton) rootView.findViewById(R.id.rate_on_google_play);
+        rate_on_google_play = rootView.findViewById(R.id.rate_on_google_play);
 
         final Animation pulse = AnimationUtils.loadAnimation(activity, R.anim.pulse);
-        heart = (ImageView) rootView.findViewById(R.id.heart);
+        heart = rootView.findViewById(R.id.heart);
         heart.startAnimation(pulse);
 
         rate_on_google_play.setOnClickListener(new View.OnClickListener() {
@@ -260,7 +227,6 @@ public class SaidItFragment extends Fragment {
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        // star the app
                         try {
                             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/mafik")));
                         } catch (android.content.ActivityNotFoundException anfe) {
@@ -275,7 +241,6 @@ public class SaidItFragment extends Fragment {
                         heart.setScaleX(1);
                         heart.setScaleY(1);
                         heart.animate().alpha(1).start();
-
                     }
                 }, 3000);
             }
@@ -287,6 +252,7 @@ public class SaidItFragment extends Fragment {
                 startActivity(new Intent(activity, SettingsActivity.class));
             }
         });
+
         serviceStateCallback.state(isListening, isRecording, 0, 0, 0);
         return rootView;
     }
@@ -300,23 +266,15 @@ public class SaidItFragment extends Fragment {
             if ((isRecording != recording) || (isListening != listeningEnabled)) {
                 if (recording != isRecording) {
                     isRecording = recording;
-                    if (recording) {
-                        rec_section.setVisibility(View.VISIBLE);
-                    } else {
-                        rec_section.setVisibility(View.GONE);
-                    }
+                    rec_section.setVisibility(recording ? View.VISIBLE : View.GONE);
                 }
 
                 if (listeningEnabled != isListening) {
                     isListening = listeningEnabled;
                     if (listeningEnabled) {
                         listenButton.setText(R.string.listening_enabled_disable);
-                        listenButton.setBackgroundResource(R.drawable.top_green_button);
-                        listenButton.setShadowLayer(0.01f, 0, resources.getDimensionPixelOffset(R.dimen.shadow_offset), resources.getColor(R.color.dark_green));
                     } else {
                         listenButton.setText(R.string.listening_disabled_enable);
-                        listenButton.setBackgroundResource(R.drawable.top_gray_button);
-                        listenButton.setShadowLayer(0.01f, 0, resources.getDimensionPixelOffset(R.dimen.shadow_offset), 0xff666666);
                     }
                 }
 
@@ -372,7 +330,7 @@ public class SaidItFragment extends Fragment {
                     if (listeningEnabled) {
                         echo.disableListening();
                     } else {
-                        dialog.show(getFragmentManager(), "Preparing memory");
+                        dialog.show(getParentFragmentManager(), "Preparing memory");
 
                         new Handler().post(new Runnable() {
                             @Override
@@ -415,9 +373,10 @@ public class SaidItFragment extends Fragment {
                             if (recording) {
                                 echo.stopRecording(new PromptFileReceiver(getActivity()),"");
                             } else {
-                                ProgressDialog pd = new ProgressDialog(getActivity());
-                                pd.setMessage("Recording...");
-                                pd.show();
+                                @SuppressLint("ValidFragment")
+                                final WorkingDialog pd = new WorkingDialog();
+                                pd.setDescriptionStringId(R.string.work_default);
+                                pd.show(getParentFragmentManager(), "Recording");
                                 final float seconds = getPrependedSeconds(button);
                                 if (keepRecording) {
                                     echo.startRecording(seconds);
@@ -434,7 +393,7 @@ public class SaidItFragment extends Fragment {
                                     String defaultName = "Echo - " + DateUtils.formatDateTime(getActivity(), startMillis, flags);
                                     fileName.setText(defaultName);
                                     fileName.selectAll();
-                                    new AlertDialog.Builder(getActivity())
+                                    new MaterialAlertDialogBuilder(getActivity())
                                         .setView(dialogView)
                                         .setPositiveButton("Save", new DialogInterface.OnClickListener() {
                                             @Override
@@ -478,7 +437,7 @@ public class SaidItFragment extends Fragment {
         String mimeType = java.net.URLConnection.guessContentTypeFromName(outFile.getName());
         if (mimeType == null) mimeType = "audio/*";
         intent.setDataAndType(fileUri, mimeType);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // Grant read permission to the receiving app
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
@@ -506,13 +465,6 @@ public class SaidItFragment extends Fragment {
         public void fileReady(final File file, float runtime) {
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
                 return;
             }
             notificationManager.notify(43, buildNotificationForFile(context, file));
@@ -532,7 +484,7 @@ public class SaidItFragment extends Fragment {
             new RecordingDoneDialog()
                     .setFile(file)
                     .setRuntime(runtime)
-                    .show(activity.getFragmentManager(), "Recording Done");
+                    .show(((androidx.appcompat.app.AppCompatActivity) activity).getSupportFragmentManager(), "Recording Done");
         }
     }
 }
