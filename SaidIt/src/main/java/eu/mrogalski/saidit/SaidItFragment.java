@@ -20,12 +20,9 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -73,8 +70,7 @@ public class SaidItFragment extends Fragment {
     private TextView rec_time;
     private Button record_pause_button;
 
-    private Button rate_on_google_play;
-    private ImageView heart;
+
 
     @Override
     public void onStart() {
@@ -201,57 +197,6 @@ public class SaidItFragment extends Fragment {
         rec_section = rootView.findViewById(R.id.rec_section);
         rec_indicator = rootView.findViewById(R.id.rec_indicator);
         rec_time = rootView.findViewById(R.id.rec_time);
-
-        rate_on_google_play = rootView.findViewById(R.id.rate_on_google_play);
-
-        final Animation pulse = AnimationUtils.loadAnimation(activity, R.anim.pulse);
-        heart = rootView.findViewById(R.id.heart);
-        heart.startAnimation(pulse);
-
-        rate_on_google_play.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/mafik/echo")));
-                } catch (android.content.ActivityNotFoundException anfe) {
-                    // ignore
-                }
-            }
-        });
-
-        heart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                heart.animate().scaleX(10).scaleY(10).alpha(0).setDuration(2000).start();
-                Handler handler = new Handler(activity.getMainLooper());
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/mafik")));
-                        } catch (android.content.ActivityNotFoundException anfe) {
-                            // ignore
-                        }
-                    }
-                }, 1000);
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        heart.setAlpha(0f);
-                        heart.setScaleX(1);
-                        heart.setScaleY(1);
-                        heart.animate().alpha(1).start();
-                    }
-                }, 3000);
-            }
-        });
-
-        rootView.findViewById(R.id.settings_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(activity, SettingsActivity.class));
-            }
-        });
 
         serviceStateCallback.state(isListening, isRecording, 0, 0, 0);
         return rootView;
