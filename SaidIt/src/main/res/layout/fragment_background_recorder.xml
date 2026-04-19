@@ -37,67 +37,54 @@
             android:paddingEnd="16dp"
             android:paddingBottom="24dp">
 
-            <!-- Status card -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/status_card"
-                style="@style/Widget.Material3.CardView.Filled"
+            <!-- Status section -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardBackgroundColor="?attr/colorPrimaryContainer">
+                android:orientation="vertical"
+                android:layout_marginTop="16dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <View
+                        android:id="@+id/status_dot"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:background="@drawable/status_dot" />
+
+                    <TextView
+                        android:id="@+id/status_label"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:text="@string/listening_enabled_disable"
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        android:textColor="?attr/colorOnSurface" />
 
-                        <View
-                            android:id="@+id/status_dot"
-                            android:layout_width="10dp"
-                            android:layout_height="10dp"
-                            android:background="@drawable/status_dot" />
-
-                        <TextView
-                            android:id="@+id/status_label"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
-                            android:layout_weight="1"
-                            android:text="@string/listening_enabled_disable"
-                            android:textAppearance="?attr/textAppearanceTitleMedium"
-                            android:textColor="?attr/colorOnPrimaryContainer" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/listen_toggle_button"
-                            style="@style/Widget.Material3.Button.IconButton"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            app:icon="@drawable/ic_stop"
-                            app:iconTint="?attr/colorOnPrimaryContainer"
-                            app:iconSize="20dp" />
-
-                    </LinearLayout>
-
-                    <eu.mrogalski.saidit.WaveformView
-                        android:id="@+id/waveform"
-                        android:layout_width="match_parent"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/listen_toggle_button"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
                         android:layout_height="40dp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="8dp" />
+                        android:text="@string/stop"
+                        app:icon="@drawable/ic_stop"
+                        app:iconSize="18dp" />
 
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+
+                <eu.mrogalski.saidit.WaveformView
+                    android:id="@+id/waveform"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp" />
+
+            </LinearLayout>
 
             <!-- Ready section -->
             <LinearLayout
@@ -112,7 +99,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_marginTop="24dp">
+                    android:layout_marginTop="48dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:text="@string/section_memory"
+                        android:textAppearance="?attr/textAppearanceTitleLarge"
+                        android:textColor="?attr/colorOnSurface" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -179,105 +174,85 @@
 
                 </LinearLayout>
 
-                <!-- Save buttons card -->
-                <com.google.android.material.card.MaterialCardView
-                    style="@style/Widget.Material3.CardView.Filled"
+                <!-- Save section -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp">
+                    android:orientation="vertical"
+                    android:layout_marginTop="48dp">
 
-                    <LinearLayout
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="20dp"
+                        android:text="@string/section_save"
+                        android:textAppearance="?attr/textAppearanceTitleLarge"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/save_button"
+                        style="@style/Widget.Material3.Button"
+                        android:layout_width="match_parent"
+                        android:layout_height="80dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="@string/save_last_default"
+                        android:textAppearance="?attr/textAppearanceTitleLarge"
+                        android:textStyle="bold"
+                        app:icon="@drawable/ic_save"
+                        app:iconGravity="textStart"
+                        app:iconSize="28dp"
+                        app:cornerRadius="20dp" />
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/duration_chips"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp">
+                        android:layout_marginTop="20dp"
+                        android:gravity="center_horizontal"
+                        app:singleSelection="true"
+                        app:selectionRequired="true"
+                        app:chipSpacingHorizontal="8dp"
+                        app:singleLine="true">
 
-                        <TextView
-                            android:layout_width="match_parent"
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_30s"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/save_description"
-                            android:textAppearance="?attr/textAppearanceBodyMedium" />
+                            android:text="@string/chip_30s" />
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_2m"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:orientation="horizontal">
+                            android:text="@string/chip_2m" />
 
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/record_last_minute"
-                                style="@style/Widget.Material3.Button.TonalButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="4dp"
-                                android:layout_weight="1"
-                                android:text="@string/record_one_minute" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/record_last_5_minutes"
-                                style="@style/Widget.Material3.Button.TonalButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="4dp"
-                                android:layout_marginEnd="4dp"
-                                android:layout_weight="1"
-                                android:text="@string/record_five_minutes" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/record_last_max"
-                                style="@style/Widget.Material3.Button.TonalButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="4dp"
-                                android:layout_weight="1"
-                                android:text="@string/record_all_memory" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_5m"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:orientation="horizontal">
+                            android:text="@string/chip_5m" />
 
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/record_last_30_minutes"
-                                style="@style/Widget.Material3.Button.TonalButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="4dp"
-                                android:layout_weight="1"
-                                android:text="@string/record_30_minutes" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/record_last_2_hrs"
-                                style="@style/Widget.Material3.Button.TonalButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="4dp"
-                                android:layout_marginEnd="4dp"
-                                android:layout_weight="1"
-                                android:text="@string/record_2_hrs" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/record_last_6_hrs"
-                                style="@style/Widget.Material3.Button.TonalButton"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="4dp"
-                                android:layout_weight="1"
-                                android:text="@string/record_6_hrs" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="match_parent"
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_30m"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:text="@string/record_description"
-                            android:textAppearance="?attr/textAppearanceBodySmall"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
+                            android:text="@string/chip_30m" />
 
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_max"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/chip_max" />
+
+                    </com.google.android.material.chip.ChipGroup>
+
+                </LinearLayout>
 
             </LinearLayout>
 
@@ -294,7 +269,7 @@
                     style="@style/Widget.Material3.CardView.Filled"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
+                    android:layout_marginTop="48dp"
                     app:cardBackgroundColor="?attr/colorErrorContainer">
 
                     <LinearLayout
