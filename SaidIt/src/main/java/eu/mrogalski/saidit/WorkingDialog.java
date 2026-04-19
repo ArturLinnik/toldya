@@ -31,8 +31,6 @@ public class WorkingDialog extends ThemedDialog {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View root = inflater.inflate(R.layout.progress_dialog, container);
 
-        fixFonts(root);
-
         setDescriptionOnView(root);
 
         return root;

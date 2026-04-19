@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design 3 dark color scheme from seed #B7C5ED -->
+    <color name="md_primary">#ffaac7ff</color>
+    <color name="md_on_primary">#ff0e3160</color>
+    <color name="md_primary_container">#ff294777</color>
+    <color name="md_on_primary_container">#ffd6e3ff</color>
+
+    <color name="md_secondary">#ffbec6dc</color>
+    <color name="md_on_secondary">#ff283141</color>
+    <color name="md_secondary_container">#ff3e4759</color>
+    <color name="md_on_secondary_container">#ffdae2f9</color>
+
+    <color name="md_tertiary">#ffe0bbde</color>
+    <color name="md_on_tertiary">#ff3f2844</color>
+    <color name="md_tertiary_container">#ff573e5c</color>
+    <color name="md_on_tertiary_container">#fffad8fd</color>
+
+    <color name="md_error">#ffffb4ab</color>
+    <color name="md_on_error">#ff690005</color>
+    <color name="md_error_container">#ff93000a</color>
+    <color name="md_on_error_container">#ffffdad6</color>
+
+    <color name="md_background">#ff111318</color>
+    <color name="md_on_background">#ffe2e2e9</color>
+    <color name="md_surface">#ff111318</color>
+    <color name="md_on_surface">#ffe2e2e9</color>
+    <color name="md_surface_variant">#ff44474e</color>
+    <color name="md_on_surface_variant">#ffc4c6d0</color>
+    <color name="md_outline">#ff8e9099</color>
+    <color name="md_outline_variant">#ff44474e</color>
+    <color name="md_inverse_surface">#ffe2e2e9</color>
+    <color name="md_inverse_on_surface">#ff2e3036</color>
+    <color name="md_inverse_primary">#ff415f91</color>
+    <color name="md_surface_container_lowest">#ff0c0e13</color>
+    <color name="md_surface_container_low">#ff191c20</color>
+    <color name="md_surface_container">#ff1d2024</color>
+    <color name="md_surface_container_high">#ff282a2f</color>
+    <color name="md_surface_container_highest">#ff33353a</color>
+</resources>

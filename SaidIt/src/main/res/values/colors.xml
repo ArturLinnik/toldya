@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Legacy colors (still referenced by some code) -->
     <color name="gray_0">#ff000000</color>
     <color name="gray_6">#ff666666</color>
     <color name="gray_8">#ff888888</color>
@@ -10,7 +11,6 @@
     <color name="gray_f">#ffffffff</color>
 
     <color name="transparent">#00000000</color>
-
 
     <color name="red">#ffff0000</color>
     <color name="light_red">#ffff5555</color>
@@ -27,4 +27,44 @@
 
     <color name="half_green">#8046d869</color>
     <color name="quarter_green">#4046d869</color>
+
+    <!-- Material Design 3 color scheme from seed #B7C5ED -->
+    <color name="md_seed">#ffB7C5ED</color>
+
+    <color name="md_primary">#ff415f91</color>
+    <color name="md_on_primary">#ffffffff</color>
+    <color name="md_primary_container">#ffd6e3ff</color>
+    <color name="md_on_primary_container">#ff001b3e</color>
+
+    <color name="md_secondary">#ff565e71</color>
+    <color name="md_on_secondary">#ffffffff</color>
+    <color name="md_secondary_container">#ffdae2f9</color>
+    <color name="md_on_secondary_container">#ff131c2b</color>
+
+    <color name="md_tertiary">#ff705575</color>
+    <color name="md_on_tertiary">#ffffffff</color>
+    <color name="md_tertiary_container">#fffad8fd</color>
+    <color name="md_on_tertiary_container">#ff29132e</color>
+
+    <color name="md_error">#ffba1a1a</color>
+    <color name="md_on_error">#ffffffff</color>
+    <color name="md_error_container">#ffffdad6</color>
+    <color name="md_on_error_container">#ff410002</color>
+
+    <color name="md_background">#fff9f9ff</color>
+    <color name="md_on_background">#ff191c20</color>
+    <color name="md_surface">#fff9f9ff</color>
+    <color name="md_on_surface">#ff191c20</color>
+    <color name="md_surface_variant">#ffe0e2ec</color>
+    <color name="md_on_surface_variant">#ff44474e</color>
+    <color name="md_outline">#ff74777f</color>
+    <color name="md_outline_variant">#ffc4c6d0</color>
+    <color name="md_inverse_surface">#ff2e3036</color>
+    <color name="md_inverse_on_surface">#fff0f0f7</color>
+    <color name="md_inverse_primary">#ffaac7ff</color>
+    <color name="md_surface_container_lowest">#ffffffff</color>
+    <color name="md_surface_container_low">#fff3f3fa</color>
+    <color name="md_surface_container">#ffededf4</color>
+    <color name="md_surface_container_high">#ffe8e8ee</color>
+    <color name="md_surface_container_highest">#ffe2e2e9</color>
 </resources>

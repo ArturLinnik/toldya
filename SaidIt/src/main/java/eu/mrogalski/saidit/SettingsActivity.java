@@ -1,16 +1,12 @@
 package eu.mrogalski.saidit;
 
-import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.res.AssetManager;
-import android.content.res.Resources;
-import android.graphics.Rect;
-import android.graphics.Typeface;
+import android.content.res.ColorStateList;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodecInfo;
@@ -22,21 +18,23 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.materialswitch.MaterialSwitch;
+
 import eu.mrogalski.StringFormat;
 import eu.mrogalski.android.TimeFormat;
-import eu.mrogalski.android.Views;
 
-public class SettingsActivity extends Activity {
+public class SettingsActivity extends AppCompatActivity {
     static final String TAG = SettingsActivity.class.getSimpleName();
     private final MemoryOnClickListener memoryClickListener = new MemoryOnClickListener();
     private final QualityOnClickListener qualityClickListener = new QualityOnClickListener();
-    private final FormatOnClickListener formatClickListener = new FormatOnClickListener();
-
 
     final WorkingDialog dialog = new WorkingDialog();
 
@@ -72,6 +70,19 @@ public class SettingsActivity extends Activity {
 
     final TimeFormat.Result timeFormatResult = new TimeFormat.Result();
 
+    private void setButtonHighlight(View view, boolean selected) {
+        if (view instanceof Button) {
+            Button button = (Button) view;
+            if (selected) {
+                button.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.md_primary)));
+                button.setTextColor(getColor(R.color.md_on_primary));
+            } else {
+                button.setBackgroundTintList(ColorStateList.valueOf(getColor(R.color.md_surface_container)));
+                button.setTextColor(getColor(R.color.md_on_surface));
+            }
+        }
+    }
+
     private void syncScheduleUI() {
         final SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
         boolean scheduleEnabled = prefs.getBoolean(SaidIt.SCHEDULE_ENABLED_KEY, false);
@@ -80,19 +91,16 @@ public class SettingsActivity extends Activity {
         int endHour = prefs.getInt(SaidIt.SCHEDULE_END_HOUR_KEY, 23);
         int endMinute = prefs.getInt(SaidIt.SCHEDULE_END_MINUTE_KEY, 0);
 
-        Button toggle = (Button) findViewById(R.id.schedule_toggle);
-        Button startTime = (Button) findViewById(R.id.schedule_start_time);
-        Button endTime = (Button) findViewById(R.id.schedule_end_time);
+        MaterialSwitch toggle = findViewById(R.id.schedule_toggle);
+        Button startTime = findViewById(R.id.schedule_start_time);
+        Button endTime = findViewById(R.id.schedule_end_time);
         View timesLayout = findViewById(R.id.schedule_times_layout);
 
-        toggle.setText(scheduleEnabled ? R.string.schedule_on : R.string.schedule_off);
-        toggle.setBackgroundResource(scheduleEnabled ? R.drawable.green_button : R.drawable.gray_button);
+        toggle.setChecked(scheduleEnabled);
 
         startTime.setText(String.format("%02d:%02d", startHour, startMinute));
         endTime.setText(String.format("%02d:%02d", endHour, endMinute));
 
-        startTime.setBackgroundResource(scheduleEnabled ? R.drawable.green_button : R.drawable.gray_button);
-        endTime.setBackgroundResource(scheduleEnabled ? R.drawable.green_button : R.drawable.gray_button);
         startTime.setEnabled(scheduleEnabled);
         endTime.setEnabled(scheduleEnabled);
         timesLayout.setAlpha(scheduleEnabled ? 1.0f : 0.4f);
@@ -100,26 +108,23 @@ public class SettingsActivity extends Activity {
 
     private void syncUI() {
         final long maxMemory = Runtime.getRuntime().maxMemory();
-        System.out.println("maxMemory = " + maxMemory);
-        System.out.println("totalMemory = " + Runtime.getRuntime().totalMemory());
 
         ((Button) findViewById(R.id.memory_low)).setText(StringFormat.shortFileSize(maxMemory / 4));
         ((Button) findViewById(R.id.memory_medium)).setText(StringFormat.shortFileSize(maxMemory / 2));
-//        ((Button) findViewById(R.id.memory_high)).setText(StringFormat.shortFileSize(maxMemory * 3 / 4));
         ((Button) findViewById(R.id.memory_high)).setText(StringFormat.shortFileSize((long) (maxMemory * 0.90)));
 
-
         TimeFormat.naturalLanguage(getResources(), service.getBytesToSeconds() * service.getMemorySize(), timeFormatResult);
-        ((TextView)findViewById(R.id.history_limit)).setText(timeFormatResult.text);
+        ((TextView) findViewById(R.id.history_limit)).setText(timeFormatResult.text);
 
         highlightButtons();
+        syncFormatChips();
         syncScheduleUI();
     }
 
     void highlightButtons() {
         final long maxMemory = Runtime.getRuntime().maxMemory();
 
-        int button = (int)(service.getMemorySize() / (maxMemory / 4)); // 1 - memory_low; 2 - memory_medium; 3 - memory_high
+        int button = (int)(service.getMemorySize() / (maxMemory / 4));
         highlightButton(R.id.memory_low, R.id.memory_medium, R.id.memory_high, button);
 
         int samplingRate = service.getSamplingRate();
@@ -127,104 +132,68 @@ public class SettingsActivity extends Activity {
         else if(samplingRate >= 16000) button = 2;
         else button = 1;
         highlightButton(R.id.quality_8kHz, R.id.quality_16kHz, R.id.quality_48kHz, button);
+    }
 
+    private void syncFormatChips() {
         SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
         OutputFormat format = OutputFormat.fromPreference(prefs.getString(SaidIt.OUTPUT_FORMAT_KEY, "WAV"));
-        switch (format) {
-            case FLAC: button = 2; break;
-            case OGG:  button = 3; break;
-            case OPUS: button = 4; break;
-            default:   button = 1; break;
-        }
-        highlightButton(R.id.format_wav, R.id.format_flac, R.id.format_ogg, R.id.format_opus, button);
+        ((Chip) findViewById(R.id.format_wav)).setChecked(format == OutputFormat.WAV);
+        ((Chip) findViewById(R.id.format_flac)).setChecked(format == OutputFormat.FLAC);
+        ((Chip) findViewById(R.id.format_ogg)).setChecked(format == OutputFormat.OGG);
+        ((Chip) findViewById(R.id.format_opus)).setChecked(format == OutputFormat.OPUS);
     }
 
     private void highlightButton(int button1, int button2, int button3, int i) {
-        findViewById(button1).setBackgroundResource(1 == i ? R.drawable.green_button : R.drawable.gray_button);
-        findViewById(button2).setBackgroundResource(2 == i ? R.drawable.green_button : R.drawable.gray_button);
-        findViewById(button3).setBackgroundResource(3 == i ? R.drawable.green_button : R.drawable.gray_button);
-    }
-
-    private void highlightButton(int button1, int button2, int button3, int button4, int i) {
-        findViewById(button1).setBackgroundResource(1 == i ? R.drawable.green_button : R.drawable.gray_button);
-        findViewById(button2).setBackgroundResource(2 == i ? R.drawable.green_button : R.drawable.gray_button);
-        findViewById(button3).setBackgroundResource(3 == i ? R.drawable.green_button : R.drawable.gray_button);
-        findViewById(button4).setBackgroundResource(4 == i ? R.drawable.green_button : R.drawable.gray_button);
+        setButtonHighlight(findViewById(button1), 1 == i);
+        setButtonHighlight(findViewById(button2), 2 == i);
+        setButtonHighlight(findViewById(button3), 3 == i);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_settings);
 
-        final AssetManager assets = getAssets();
-        final Resources resources = getResources();
-
-        final float density = resources.getDisplayMetrics().density;
-
-        final Typeface robotoCondensedBold = Typeface.createFromAsset(assets,"RobotoCondensedBold.ttf");
-        final Typeface robotoCondensedRegular = Typeface.createFromAsset(assets, "RobotoCondensed-Regular.ttf");
-
-        final ViewGroup root = (ViewGroup) getLayoutInflater().inflate(R.layout.activity_settings, null);
-        Views.search(root, new Views.SearchViewCallback() {
-            @Override
-            public void onView(View view, ViewGroup parent) {
-                if(view instanceof Button) {
-                    final Button button = (Button) view;
-                    button.setTypeface(robotoCondensedBold);
-                } else if(view instanceof TextView) {
-                    final String tag = (String) view.getTag();
-                    final TextView textView = (TextView) view;
-                    if(tag != null) {
-                        if(tag.equals("bold")) {
-                            textView.setTypeface(robotoCondensedBold);
-                        } else {
-                            textView.setTypeface(robotoCondensedRegular);
-                        }
-                    } else {
-                        textView.setTypeface(robotoCondensedRegular);
-                    }
-                }
-            }
-        });
-
-        root.findViewById(R.id.settings_return).setOnClickListener(new View.OnClickListener() {
+        MaterialToolbar toolbar = findViewById(R.id.settings_toolbar);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
             }
         });
 
-        final LinearLayout settingsLayout = (LinearLayout) root.findViewById(R.id.settings_layout);
+        findViewById(R.id.memory_low).setOnClickListener(memoryClickListener);
+        findViewById(R.id.memory_medium).setOnClickListener(memoryClickListener);
+        findViewById(R.id.memory_high).setOnClickListener(memoryClickListener);
 
-        final FrameLayout myFrameLayout = new FrameLayout(this) {
-            @Override
-            protected boolean fitSystemWindows(Rect insets) {
-                settingsLayout.setPadding(insets.left, insets.top, insets.right, insets.bottom);
-                return true;
-            }
-        };
+        initSampleRateButton(R.id.quality_8kHz, 8000, 11025);
+        initSampleRateButton(R.id.quality_16kHz, 16000, 22050);
+        initSampleRateButton(R.id.quality_48kHz, 48000, 44100);
 
-        myFrameLayout.addView(root);
-
-        root.findViewById(R.id.memory_low).setOnClickListener(memoryClickListener);
-        root.findViewById(R.id.memory_medium).setOnClickListener(memoryClickListener);
-        root.findViewById(R.id.memory_high).setOnClickListener(memoryClickListener);
-
-        initSampleRateButton(root, R.id.quality_8kHz, 8000, 11025);
-        initSampleRateButton(root, R.id.quality_16kHz, 16000, 22050);
-        initSampleRateButton(root, R.id.quality_48kHz, 48000, 44100);
-
-        root.findViewById(R.id.format_wav).setOnClickListener(formatClickListener);
-        root.findViewById(R.id.format_flac).setOnClickListener(formatClickListener);
-        root.findViewById(R.id.format_ogg).setOnClickListener(formatClickListener);
-        root.findViewById(R.id.format_opus).setOnClickListener(formatClickListener);
-
-        root.findViewById(R.id.schedule_toggle).setOnClickListener(new View.OnClickListener() {
+        View.OnClickListener formatClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
-                boolean enabled = prefs.getBoolean(SaidIt.SCHEDULE_ENABLED_KEY, false);
-                prefs.edit().putBoolean(SaidIt.SCHEDULE_ENABLED_KEY, !enabled).apply();
+                String format;
+                int id = v.getId();
+                if (id == R.id.format_flac) format = "FLAC";
+                else if (id == R.id.format_ogg) format = "OGG";
+                else if (id == R.id.format_opus) format = "OPUS";
+                else format = "WAV";
+                getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+                        .edit().putString(SaidIt.OUTPUT_FORMAT_KEY, format).apply();
+                syncFormatChips();
+            }
+        };
+        findViewById(R.id.format_wav).setOnClickListener(formatClickListener);
+        findViewById(R.id.format_flac).setOnClickListener(formatClickListener);
+        findViewById(R.id.format_ogg).setOnClickListener(formatClickListener);
+        findViewById(R.id.format_opus).setOnClickListener(formatClickListener);
+
+        ((MaterialSwitch) findViewById(R.id.schedule_toggle)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+                        .edit().putBoolean(SaidIt.SCHEDULE_ENABLED_KEY, isChecked).apply();
                 syncScheduleUI();
                 if (service != null) {
                     service.applySchedule();
@@ -232,7 +201,7 @@ public class SettingsActivity extends Activity {
             }
         });
 
-        root.findViewById(R.id.schedule_start_time).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.schedule_start_time).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
@@ -254,7 +223,7 @@ public class SettingsActivity extends Activity {
             }
         });
 
-        root.findViewById(R.id.schedule_end_time).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.schedule_end_time).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
@@ -277,8 +246,6 @@ public class SettingsActivity extends Activity {
         });
 
         dialog.setDescriptionStringId(R.string.work_preparing_memory);
-
-        setContentView(myFrameLayout);
     }
 
     private void debugPrintCodecs() {
@@ -300,8 +267,8 @@ public class SettingsActivity extends Activity {
         }
     }
 
-    private void initSampleRateButton(ViewGroup layout, int buttonId, int primarySampleRate, int secondarySampleRate) {
-        Button button = (Button) layout.findViewById(buttonId);
+    private void initSampleRateButton(int buttonId, int primarySampleRate, int secondarySampleRate) {
+        Button button = findViewById(buttonId);
         button.setOnClickListener(qualityClickListener);
         if(testSampleRateValid(primarySampleRate)) {
             button.setText(String.format("%d kHz", primarySampleRate / 1000));
@@ -323,7 +290,7 @@ public class SettingsActivity extends Activity {
         @Override
         public void onClick(View v) {
             final long memory = getMultiplier(v) * Runtime.getRuntime().maxMemory() / 4;
-            dialog.show(getFragmentManager(), "Preparing memory");
+            dialog.show(getSupportFragmentManager(), "Preparing memory");
 
             new Handler().post(new Runnable() {
                 @Override
@@ -341,11 +308,10 @@ public class SettingsActivity extends Activity {
         }
 
         private int getMultiplier(View button) {
-            switch (button.getId()) {
-                case R.id.memory_high: return 3;
-                case R.id.memory_medium: return 2;
-                case R.id.memory_low: return 1;
-            }
+            int id = button.getId();
+            if (id == R.id.memory_high) return 3;
+            if (id == R.id.memory_medium) return 2;
+            if (id == R.id.memory_low) return 1;
             return 0;
         }
     }
@@ -354,7 +320,7 @@ public class SettingsActivity extends Activity {
         @Override
         public void onClick(View v) {
             final int sampleRate = getSampleRate(v);
-            dialog.show(getFragmentManager(), "Preparing memory");
+            dialog.show(getSupportFragmentManager(), "Preparing memory");
 
             new Handler().post(new Runnable() {
                 @Override
@@ -377,22 +343,6 @@ public class SettingsActivity extends Activity {
                 return ((Integer) tag).intValue();
             }
             return 8000;
-        }
-    }
-
-    private class FormatOnClickListener implements View.OnClickListener {
-        @Override
-        public void onClick(View v) {
-            String format;
-            switch (v.getId()) {
-                case R.id.format_flac: format = "FLAC"; break;
-                case R.id.format_ogg:  format = "OGG"; break;
-                case R.id.format_opus: format = "OPUS"; break;
-                default:               format = "WAV"; break;
-            }
-            getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
-                    .edit().putString(SaidIt.OUTPUT_FORMAT_KEY, format).apply();
-            highlightButtons();
         }
     }
 }

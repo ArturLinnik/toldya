@@ -55,8 +55,6 @@ public class RecordingDoneDialog extends ThemedDialog {
         final View root = inflater.inflate(R.layout.recording_done_dialog, container);
         assert root != null;
 
-        fixFonts(root);
-
         final Activity activity = getActivity();
         assert activity != null;
         final Resources resources = activity.getResources();
