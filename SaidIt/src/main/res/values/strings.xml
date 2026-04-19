@@ -76,6 +76,7 @@
     <string name="work_preparing_memory">Preparing memory</string>
     <string name="work_contacting_server">Contacting server</string>
     <string name="work_claiming_coupon">Claiming coupon</string>
+    <string name="work_saving_recording">Saving recording…</string>
 
     <string name="install_qr_dialog_title">Install QR reader</string>
 

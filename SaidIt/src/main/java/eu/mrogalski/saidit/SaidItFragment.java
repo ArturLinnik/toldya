@@ -416,7 +416,23 @@ public class SaidItFragment extends Fragment {
                                     .setPositiveButton("Save", new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
-                                            echo.dumpRecording(seconds, new PromptFileReceiver(getActivity()), fileName.getText().toString());
+                                            @SuppressLint("ValidFragment")
+                                            final WorkingDialog savingDialog = new WorkingDialog();
+                                            savingDialog.setDescriptionStringId(R.string.work_saving_recording);
+                                            savingDialog.setCancelable(false);
+                                            savingDialog.show(getParentFragmentManager(), "Saving");
+                                            echo.dumpRecording(seconds, new SaidItService.WavFileReceiver() {
+                                                @Override
+                                                public void fileReady(File file, float runtime) {
+                                                    getActivity().runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            savingDialog.dismiss();
+                                                        }
+                                                    });
+                                                    new PromptFileReceiver(getActivity()).fileReady(file, runtime);
+                                                }
+                                            }, fileName.getText().toString());
                                         }
                                     })
                                     .setNegativeButton("Cancel", null)
