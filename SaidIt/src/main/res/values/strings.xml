@@ -41,6 +41,9 @@
         <item quantity="other">%d seconds</item>
     </plurals>
 
+    <string name="memory_buffered_label">Buffered</string>
+    <string name="memory_limit_label">Limit</string>
+
     <string name="save_description">To save contents of memory to a file, choose how much time would you like to save:</string>
 
     <string name="record_one_minute">1:00</string>

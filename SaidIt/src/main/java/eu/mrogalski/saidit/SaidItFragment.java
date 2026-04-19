@@ -65,7 +65,7 @@ public class SaidItFragment extends Fragment {
     private Button recordLastSixHrsButton;
     private TextView history_limit;
     private TextView history_size;
-    private TextView history_size_title;
+    private com.google.android.material.progressindicator.LinearProgressIndicator memoryProgress;
 
     private LinearLayout rec_section;
     private TextView rec_indicator;
@@ -171,7 +171,7 @@ public class SaidItFragment extends Fragment {
 
         history_limit = rootView.findViewById(R.id.history_limit);
         history_size = rootView.findViewById(R.id.history_size);
-        history_size_title = rootView.findViewById(R.id.history_size_title);
+        memoryProgress = rootView.findViewById(R.id.memory_progress);
 
         listenToggleButton = rootView.findViewById(R.id.listen_toggle_button);
         listenToggleButton.setOnClickListener(listenButtonClickListener);
@@ -253,19 +253,17 @@ public class SaidItFragment extends Fragment {
                 }
             }
 
-            TimeFormat.naturalLanguage(resources, totalMemory, timeFormatResult);
-
-            if (!history_limit.getText().equals(timeFormatResult.text)) {
-                history_limit.setText(timeFormatResult.text);
+            String sizeText = TimeFormat.shortTimer(memorized);
+            String limitText = TimeFormat.shortTimer(totalMemory);
+            if (!sizeText.equals(history_size.getText().toString())) {
+                history_size.setText(sizeText);
+                recordMaxButton.setText(sizeText);
             }
-
-            TimeFormat.naturalLanguage(resources, memorized, timeFormatResult);
-
-            if (!history_size.getText().equals(timeFormatResult.text)) {
-                history_size_title.setText(resources.getQuantityText(R.plurals.history_size_title, timeFormatResult.count));
-                history_size.setText(timeFormatResult.text);
-                recordMaxButton.setText(TimeFormat.shortTimer(memorized));
+            if (!limitText.equals(history_limit.getText().toString())) {
+                history_limit.setText(limitText);
             }
+            int progress = totalMemory > 0 ? (int) (memorized / totalMemory * 100) : 0;
+            memoryProgress.setProgress(progress);
 
             TimeFormat.naturalLanguage(resources, recorded, timeFormatResult);
 
