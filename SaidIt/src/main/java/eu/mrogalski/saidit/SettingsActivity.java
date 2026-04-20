@@ -7,13 +7,19 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.DocumentsContract;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -31,6 +37,19 @@ public class SettingsActivity extends AppCompatActivity {
 
     final WorkingDialog dialog = new WorkingDialog();
     private boolean syncing = false;
+
+    private final ActivityResultLauncher<Uri> directoryPicker =
+            registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), new ActivityResultCallback<Uri>() {
+                @Override
+                public void onActivityResult(Uri uri) {
+                    if (uri == null) return;
+                    getContentResolver().takePersistableUriPermission(uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+                            .edit().putString(SaidIt.STORAGE_DIRECTORY_URI_KEY, uri.toString()).apply();
+                    syncStorageLocationUI();
+                }
+            });
 
     @Override
     protected void onStart() {
@@ -63,6 +82,22 @@ public class SettingsActivity extends AppCompatActivity {
     };
 
     final TimeFormat.Result timeFormatResult = new TimeFormat.Result();
+
+    private void syncStorageLocationUI() {
+        SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
+        String uriString = prefs.getString(SaidIt.STORAGE_DIRECTORY_URI_KEY, null);
+        TextView pathView = findViewById(R.id.storage_location_path);
+        if (uriString != null) {
+            Uri uri = Uri.parse(uriString);
+            String path = uri.getLastPathSegment();
+            if (path != null) {
+                path = path.replace(":", "/");
+            }
+            pathView.setText(path != null ? path : uriString);
+        } else {
+            pathView.setText(R.string.storage_location_default);
+        }
+    }
 
     private void syncScheduleUI() {
         final SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
@@ -101,6 +136,7 @@ public class SettingsActivity extends AppCompatActivity {
         syncMemoryChips();
         syncQualityChips();
         syncFormatChips();
+        syncStorageLocationUI();
         syncScheduleUI();
         syncing = false;
     }
@@ -218,6 +254,18 @@ public class SettingsActivity extends AppCompatActivity {
                 syncFormatChips();
             }
         });
+
+        View.OnClickListener storageClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SharedPreferences prefs = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE);
+                String uriString = prefs.getString(SaidIt.STORAGE_DIRECTORY_URI_KEY, null);
+                Uri initialUri = uriString != null ? Uri.parse(uriString) : null;
+                directoryPicker.launch(initialUri);
+            }
+        };
+        findViewById(R.id.storage_location_card).setOnClickListener(storageClickListener);
+        findViewById(R.id.storage_location_change).setOnClickListener(storageClickListener);
 
         ((MaterialSwitch) findViewById(R.id.schedule_toggle)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
