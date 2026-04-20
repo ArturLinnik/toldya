@@ -1,5 +1,8 @@
 package eu.mrogalski.saidit;
 
+import android.content.SharedPreferences;
+import java.util.Calendar;
+
 public class SaidIt {
 
     static final String PACKAGE_NAME = "eu.mrogalski.saidit";
@@ -15,12 +18,26 @@ public class SaidIt {
     static final String STORAGE_DIRECTORY_URI_KEY = "storage_directory_uri";
     static final String LAST_SAVED_FILE_KEY = "last_saved_file";
     static final String LAST_SAVED_TIME_KEY = "last_saved_time";
-    static final String SKU = "unlimited_history";
-    static final String BASE64_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlD0FMFGp4AWzjW" +
-            "LTsUZgm0soga0mVVNGFj0qoATaoQCE/LamF7yrMCIFm9sEOB1guCEhzdr16sjysrVc2EPRisS83FoJ4K0R8" +
-            "XPDP2TrVT2SAeQpTCG27NNH+W86SlGEqQeQhMPMhR+HDTckHv3KBpD8BZEEIbkXPv6SGFqcZub6xzn9r14l" +
-            "6ptYIWboKGGBh1i9/nJpdhCMPxuLn/WZnRXGxqGpfNw2xT25/muUDZgRVezy6/5eI+ciMn5H1U0ADBjXvl1" +
-            "Py+4ClkR1V1Mfo9lvauB03zM8Fsa3LlIPle5a+wGKsRCLW/rJ/eE/rje6X7x/n+w8J4OiFvVATj0T8QIDAQ" +
-            "AB";
+
+    static boolean isWithinSchedule(SharedPreferences prefs) {
+        if (!prefs.getBoolean(SCHEDULE_ENABLED_KEY, false)) {
+            return true;
+        }
+        int startHour = prefs.getInt(SCHEDULE_START_HOUR_KEY, 8);
+        int startMinute = prefs.getInt(SCHEDULE_START_MINUTE_KEY, 0);
+        int endHour = prefs.getInt(SCHEDULE_END_HOUR_KEY, 23);
+        int endMinute = prefs.getInt(SCHEDULE_END_MINUTE_KEY, 0);
+
+        Calendar now = Calendar.getInstance();
+        int nowMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
+        int startMinutes = startHour * 60 + startMinute;
+        int endMinutes = endHour * 60 + endMinute;
+
+        if (startMinutes <= endMinutes) {
+            return nowMinutes >= startMinutes && nowMinutes < endMinutes;
+        } else {
+            return nowMinutes >= startMinutes || nowMinutes < endMinutes;
+        }
+    }
 
 }

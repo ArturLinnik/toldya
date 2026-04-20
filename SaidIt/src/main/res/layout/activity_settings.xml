@@ -15,7 +15,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="?attr/homeAsUpIndicator"
-            app:title="@string/upper_memory_limit_settings_end" />
+            app:title="@string/settings_title" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

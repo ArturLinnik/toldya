@@ -30,7 +30,6 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Calendar;
 
 import static eu.mrogalski.saidit.SaidIt.*;
 
@@ -567,25 +566,7 @@ public class SaidItService extends Service {
     private static final long SCHEDULE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
 
     boolean isWithinSchedule() {
-        final SharedPreferences prefs = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
-        if (!prefs.getBoolean(SCHEDULE_ENABLED_KEY, false)) {
-            return true;
-        }
-        int startHour = prefs.getInt(SCHEDULE_START_HOUR_KEY, 8);
-        int startMinute = prefs.getInt(SCHEDULE_START_MINUTE_KEY, 0);
-        int endHour = prefs.getInt(SCHEDULE_END_HOUR_KEY, 23);
-        int endMinute = prefs.getInt(SCHEDULE_END_MINUTE_KEY, 0);
-
-        Calendar now = Calendar.getInstance();
-        int nowMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
-        int startMinutes = startHour * 60 + startMinute;
-        int endMinutes = endHour * 60 + endMinute;
-
-        if (startMinutes <= endMinutes) {
-            return nowMinutes >= startMinutes && nowMinutes < endMinutes;
-        } else {
-            return nowMinutes >= startMinutes || nowMinutes < endMinutes;
-        }
+        return SaidIt.isWithinSchedule(getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE));
     }
 
     public void applySchedule() {
