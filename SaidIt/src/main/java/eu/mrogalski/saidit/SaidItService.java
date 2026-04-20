@@ -205,6 +205,29 @@ public class SaidItService extends Service {
         return OutputFormat.fromPreference(prefs.getString(OUTPUT_FORMAT_KEY, "WAV"));
     }
 
+    private File getStorageDir() {
+        SharedPreferences prefs = getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
+        String uriString = prefs.getString(STORAGE_DIRECTORY_URI_KEY, null);
+        if (uriString != null) {
+            android.net.Uri uri = android.net.Uri.parse(uriString);
+            String path = uri.getLastPathSegment();
+            if (path != null) {
+                String resolved = path.replace("primary:", Environment.getExternalStorageDirectory().getAbsolutePath() + "/");
+                File dir = new File(resolved);
+                if (!dir.exists()) dir.mkdirs();
+                return dir;
+            }
+        }
+        File dir;
+        if (isExternalStorageWritable()) {
+            dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "Echo");
+        } else {
+            dir = new File(getFilesDir(), "Echo");
+        }
+        if (!dir.exists()) dir.mkdir();
+        return dir;
+    }
+
     public void dumpRecording(final float memorySeconds, final WavFileReceiver wavFileReceiver, String newFileName) {
         if(state != STATE_LISTENING) throw new IllegalStateException("Not listening!");
 
@@ -228,16 +251,7 @@ public class SaidItService extends Service {
                 }
                 filename = filename.replaceAll("[:\\\\/*?\"<>|]", ".");
 
-                File storageDir;
-                if(isExternalStorageWritable()){
-                    storageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "Echo");
-                }else{
-                    storageDir = new File(getFilesDir(), "Echo");
-                }
-
-                if(!storageDir.exists()){
-                    storageDir.mkdir();
-                }
+                File storageDir = getStorageDir();
                 File file = new File(storageDir, filename);
 
                 try (AudioFileWriter writer = AudioFileWriterFactory.create(outputFormat, SAMPLE_RATE, file)) {
@@ -301,12 +315,7 @@ public class SaidItService extends Service {
                 String filename = "Echo - " + dateTime + "." + outputFormat.extension;
                 filename = filename.replaceAll("[:\\\\/*?\"<>|]", ".");
 
-                File storageDir;
-                if(isExternalStorageWritable()){
-                    storageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "Echo");
-                }else{
-                    storageDir = new File(getFilesDir(), "Echo");
-                }
+                File storageDir = getStorageDir();
                 final String storagePath = storageDir.getAbsolutePath();
 
                 String path = storagePath + "/" + filename;

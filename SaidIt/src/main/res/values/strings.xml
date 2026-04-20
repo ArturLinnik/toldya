@@ -130,6 +130,10 @@
     <string name="audio_quality_description">Quality of 8kHz is enough to recognize human speech. Higher options offer different tradeoffs between quality and memory consumption.</string>
     <string name="option_c_output_format">Output format</string>
     <string name="output_format_description">WAV is uncompressed with the best quality but largest files. FLAC offers lossless compression. OGG and OPUS use the Opus codec for efficient lossy compression with small file sizes.</string>
+    <string name="storage_location_title">Storage location</string>
+    <string name="storage_location_description">Choose where recordings are saved.</string>
+    <string name="storage_location_default">Music/Echo</string>
+    <string name="storage_location_change">Change</string>
     <string name="schedule_title">Active hours</string>
     <string name="schedule_description">When enabled, Echo will only listen during the specified hours. Outside these hours, the microphone is turned off to save battery.</string>
     <string name="settings_memory_limit">Memory limit</string>
