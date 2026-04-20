@@ -220,9 +220,9 @@ public class SaidItService extends Service {
         }
         File dir;
         if (isExternalStorageWritable()) {
-            dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "Echo");
+            dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "Toldya");
         } else {
-            dir = new File(getFilesDir(), "Echo");
+            dir = new File(getFilesDir(), "Toldya");
         }
         if (!dir.exists()) dir.mkdir();
         return dir;
@@ -245,7 +245,7 @@ public class SaidItService extends Service {
                 final int flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_SHOW_DATE;
                 final String dateTime = DateUtils.formatDateTime(SaidItService.this, millis, flags);
                 final OutputFormat outputFormat = getOutputFormat();
-                String filename = "Echo - " + dateTime + "." + outputFormat.extension;
+                String filename = "Toldya - " + dateTime + "." + outputFormat.extension;
                 if(!newFileName.equals("")){
                     filename = newFileName + "." + outputFormat.extension;
                 }
@@ -312,7 +312,7 @@ public class SaidItService extends Service {
                 final int flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_SHOW_DATE;
                 final String dateTime = DateUtils.formatDateTime(SaidItService.this, millis, flags);
                 final OutputFormat outputFormat = getOutputFormat();
-                String filename = "Echo - " + dateTime + "." + outputFormat.extension;
+                String filename = "Toldya - " + dateTime + "." + outputFormat.extension;
                 filename = filename.replaceAll("[:\\\\/*?\"<>|]", ".");
 
                 File storageDir = getStorageDir();

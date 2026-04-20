@@ -408,7 +408,7 @@ public class SaidItFragment extends Fragment {
                                 extensionLabel.setText("." + outputFormat.extension);
                                 long startMillis = System.currentTimeMillis() - (long)(seconds * 1000);
                                 int flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_SHOW_DATE;
-                                String defaultName = "Echo - " + DateUtils.formatDateTime(getActivity(), startMillis, flags);
+                                String defaultName = "Toldya - " + DateUtils.formatDateTime(getActivity(), startMillis, flags);
                                 fileName.setText(defaultName);
                                 fileName.selectAll();
                                 new MaterialAlertDialogBuilder(getActivity())

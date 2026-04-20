@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name" translatable="false">Echo</string>
+    <string name="app_name" translatable="false">Toldya</string>
 
     <!-- Notifications -->
 
@@ -17,7 +17,7 @@
     <string name="listening_disabled_enable">Stopped</string>
     <string name="listen_start">Start</string>
 
-    <string name="listening_description">Echo lets you go back in time and record events from the past.</string>
+    <string name="listening_description">Toldya lets you go back in time and record events from the past.</string>
 
     <string name="recorded_static">Recording is in progress. Already saved the most recent</string>
     <plurals name="recorded">
@@ -67,7 +67,7 @@
     <string name="upper_memory_limit_settings_end">Settings</string>
 
     <string name="read_more_at">If you want to know more read Frequently Asked Questions at</string>
-    <string name="rate_invite">Did you liked Echo? You can show your support by sponsoring it on GitHub.</string>
+    <string name="rate_invite">Did you liked Toldya? You can show your support by sponsoring it on GitHub.</string>
 
     <!-- Dialogs -->
 
@@ -83,8 +83,8 @@
     <string name="payment_method_dialog_title">How can you pay?</string>
 
     <string name="payment_failed_dialog_title">Payment Not Confirmed</string>
-    <string name="payment_failed_description">You have purchased Echo but I can\'t verify payment online. How should I proceed?</string>
-    <string name="payment_failed_description2">To give up payment verification, open Settings > Applications > Echo and clear its data.</string>
+    <string name="payment_failed_description">You have purchased Toldya but I can\'t verify payment online. How should I proceed?</string>
+    <string name="payment_failed_description2">To give up payment verification, open Settings > Applications > Toldya and clear its data.</string>
     <string name="payment_failed_dialog_confirm_manually">Confirm by email</string>
 
     <string name="payment_verification_failed_email_sent_title">Issue report sent</string>
@@ -94,7 +94,7 @@
     <string name="invalid_license_description">Scanned license doesn\'t match to your device.</string>
 
     <string name="invalid_qr_code_title">Invalid QR code</string>
-    <string name="invalid_qr_code_description">This QR code wasn\'t made for Echo.</string>
+    <string name="invalid_qr_code_description">This QR code wasn\'t made for Toldya.</string>
 
     <string name="cant_connect_title">Couldn\'t Contact Server</string>
     <string name="cant_connect_description">There was an error while contacting application\'s server. Ensure that internet connection is working and try again. If it still doesn\'t work, try different payment method.</string>
@@ -108,8 +108,8 @@
     <string name="recording_done_runtime">Length:</string>
     <string name="recording_done_size">Size:</string>
 
-    <string name="stop_echo_title">Stop Echo?</string>
-    <string name="stop_echo_message">Echo will stop listening and all buffered audio will be lost.</string>
+    <string name="stop_echo_title">Stop Toldya?</string>
+    <string name="stop_echo_message">Toldya will stop listening and all buffered audio will be lost.</string>
     <string name="stop">Stop</string>
     <string name="cancel">Cancel</string>
 
@@ -126,22 +126,22 @@
     <string name="audio_memory_change">You can change it by tweaking:</string>
     <string name="option_a_used_ram">Memory usage</string>
     <string name="option_b_audio_quality">Sound quality</string>
-    <string name="used_ram_description">Echo and other apps use system memory to keep their data. Large system memory consumption may slow other apps.</string>
+    <string name="used_ram_description">Toldya and other apps use system memory to keep their data. Large system memory consumption may slow other apps.</string>
     <string name="audio_quality_description">Quality of 8kHz is enough to recognize human speech. Higher options offer different tradeoffs between quality and memory consumption.</string>
     <string name="option_c_output_format">Output format</string>
     <string name="output_format_description">WAV is uncompressed with the best quality but largest files. FLAC offers lossless compression. OGG and OPUS use the Opus codec for efficient lossy compression with small file sizes.</string>
     <string name="storage_location_title">Storage location</string>
     <string name="storage_location_description">Choose where recordings are saved.</string>
-    <string name="storage_location_default">Music/Echo</string>
+    <string name="storage_location_default">Music/Toldya</string>
     <string name="storage_location_change">Change</string>
     <string name="schedule_title">Active hours</string>
-    <string name="schedule_description">When enabled, Echo will only listen during the specified hours. Outside these hours, the microphone is turned off to save battery.</string>
+    <string name="schedule_description">When enabled, Toldya will only listen during the specified hours. Outside these hours, the microphone is turned off to save battery.</string>
     <string name="settings_memory_limit">Memory limit</string>
     <string name="schedule_from">From</string>
     <string name="schedule_to">To</string>
     <string name="schedule_on">On</string>
     <string name="schedule_off">Off</string>
-    <string name="schedule_paused_notification">Echo is paused (outside active hours)</string>
+    <string name="schedule_paused_notification">Toldya is paused (outside active hours)</string>
     <string name="settings_return">Return</string>
 
     <!-- Others -->
@@ -150,7 +150,7 @@
     <string name="recording_name">Enter the name of the recording</string> <!-- must end sentence -->
     <string name="save_recording">Save Recording</string> <!-- must end sentence -->
     <string name="permission_required">Permission required</string>
-    <string name="permission_required_message">Echo app requires permission to record and save audio. Please enable it in the settings.</string>
+    <string name="permission_required_message">Toldya requires permission to record and save audio. Please enable it in the settings.</string>
     <!--
     <string name="compress_help"><b>WAV</b> - oznacza brak jakiejkolwiek kompresji - jest to format najlepiej oszczędzający baterię i cechujący się najlepszą jakością. Jego wadą jest duże zużycie pamięci.\n
 <b>3GP</b> - oferuje najmocniejszą kompresję ale jest bardzo energożerny i może usunąć z nagrania drobne detale\n
