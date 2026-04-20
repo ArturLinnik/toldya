@@ -668,14 +668,14 @@ public class SaidItService extends Service {
                 .setSmallIcon(R.drawable.ic_stat_notify_recording)
                 .setTicker(getString(R.string.recording))
                 .setContentIntent(pendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setOngoing(true); // Ensure notification is ongoing
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true);
 
         // Create the notification channel
         NotificationChannel channel = new NotificationChannel(
                 YOUR_NOTIFICATION_CHANNEL_ID,
                 "Recording Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_LOW
         );
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(channel);
