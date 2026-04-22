@@ -563,7 +563,6 @@ public class SaidItService extends Service {
 
     private static final String ACTION_SCHEDULE_CHECK = "eu.mrogalski.saidit.SCHEDULE_CHECK";
     private static final int SCHEDULE_CHECK_REQUEST_CODE = 2;
-    private static final long SCHEDULE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
 
     boolean isWithinSchedule() {
         return SaidIt.isWithinSchedule(getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE));
@@ -597,13 +596,14 @@ public class SaidItService extends Service {
             return;
         }
 
+        long triggerAtMillis = SaidIt.getNextTransitionMillis(prefs);
+
         Intent intent = new Intent(this, SaidItService.class);
         intent.setAction(ACTION_SCHEDULE_CHECK);
         PendingIntent pendingIntent = PendingIntent.getService(this, SCHEDULE_CHECK_REQUEST_CODE,
                 intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        alarmManager.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                SystemClock.elapsedRealtime() + SCHEDULE_CHECK_INTERVAL_MS, pendingIntent);
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
     }
 
     private void cancelScheduleCheck() {

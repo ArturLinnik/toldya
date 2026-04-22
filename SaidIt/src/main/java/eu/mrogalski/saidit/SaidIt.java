@@ -19,6 +19,33 @@ public class SaidIt {
     static final String LAST_SAVED_FILE_KEY = "last_saved_file";
     static final String LAST_SAVED_TIME_KEY = "last_saved_time";
 
+    static long getNextTransitionMillis(SharedPreferences prefs) {
+        int startHour = prefs.getInt(SCHEDULE_START_HOUR_KEY, 8);
+        int startMinute = prefs.getInt(SCHEDULE_START_MINUTE_KEY, 0);
+        int endHour = prefs.getInt(SCHEDULE_END_HOUR_KEY, 23);
+        int endMinute = prefs.getInt(SCHEDULE_END_MINUTE_KEY, 0);
+
+        Calendar now = Calendar.getInstance();
+        boolean within = isWithinSchedule(prefs);
+
+        Calendar target = (Calendar) now.clone();
+        if (within) {
+            target.set(Calendar.HOUR_OF_DAY, endHour);
+            target.set(Calendar.MINUTE, endMinute);
+        } else {
+            target.set(Calendar.HOUR_OF_DAY, startHour);
+            target.set(Calendar.MINUTE, startMinute);
+        }
+        target.set(Calendar.SECOND, 0);
+        target.set(Calendar.MILLISECOND, 0);
+
+        if (!target.after(now)) {
+            target.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        return target.getTimeInMillis();
+    }
+
     static boolean isWithinSchedule(SharedPreferences prefs) {
         if (!prefs.getBoolean(SCHEDULE_ENABLED_KEY, false)) {
             return true;

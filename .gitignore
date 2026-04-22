@@ -25,6 +25,10 @@ proguard/
 # Log Files
 *.log
 
+# Signing
+keystore.properties
+*.jks
+
 # IDEs
 .idea/
 .vscode/
