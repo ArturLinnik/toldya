@@ -130,7 +130,9 @@ public class SettingsActivity extends AppCompatActivity {
         ((Chip) findViewById(R.id.memory_medium)).setText(StringFormat.shortFileSize(maxMemory / 2));
         ((Chip) findViewById(R.id.memory_high)).setText(StringFormat.shortFileSize((long) (maxMemory * 0.90)));
 
-        TimeFormat.naturalLanguage(getResources(), service.getBytesToSeconds() * service.getMemorySize(), timeFormatResult);
+        long configuredMemory = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+                .getLong(SaidIt.AUDIO_MEMORY_SIZE_KEY, maxMemory / 4);
+        TimeFormat.naturalLanguage(getResources(), service.getBytesToSeconds() * configuredMemory, timeFormatResult);
         ((TextView) findViewById(R.id.history_limit)).setText(timeFormatResult.text);
 
         syncMemoryChips();
@@ -143,7 +145,9 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void syncMemoryChips() {
         final long maxMemory = Runtime.getRuntime().maxMemory();
-        int level = (int) (service.getMemorySize() / (maxMemory / 4));
+        long configuredMemory = getSharedPreferences(SaidIt.PACKAGE_NAME, MODE_PRIVATE)
+                .getLong(SaidIt.AUDIO_MEMORY_SIZE_KEY, maxMemory / 4);
+        int level = (int) (configuredMemory / (maxMemory / 4));
         ((Chip) findViewById(R.id.memory_low)).setChecked(level == 1);
         ((Chip) findViewById(R.id.memory_medium)).setChecked(level == 2);
         ((Chip) findViewById(R.id.memory_high)).setChecked(level == 3);
@@ -198,7 +202,7 @@ public class SettingsActivity extends AppCompatActivity {
                         service.setMemorySize(memory);
                         service.getState(new SaidItService.StateCallback() {
                             @Override
-                            public void state(boolean listeningEnabled, boolean recording, float memorized, float totalMemory, float recorded) {
+                            public void state(boolean listeningEnabled, boolean recording, boolean schedulePaused, float memorized, float totalMemory, float recorded) {
                                 syncUI();
                                 if (dialog.isVisible()) dialog.dismiss();
                             }
@@ -228,7 +232,7 @@ public class SettingsActivity extends AppCompatActivity {
                         service.setSampleRate(sampleRate);
                         service.getState(new SaidItService.StateCallback() {
                             @Override
-                            public void state(boolean listeningEnabled, boolean recording, float memorized, float totalMemory, float recorded) {
+                            public void state(boolean listeningEnabled, boolean recording, boolean schedulePaused, float memorized, float totalMemory, float recorded) {
                                 syncUI();
                                 if (dialog.isVisible()) dialog.dismiss();
                             }

@@ -508,13 +508,16 @@ public class SaidItService extends Service {
     };
 
     public interface StateCallback {
-        public void state(boolean listeningEnabled, boolean recording, float memorized, float totalMemory, float recorded);
+        public void state(boolean listeningEnabled, boolean recording, boolean schedulePaused, float memorized, float totalMemory, float recorded);
     }
 
     public void getState(final StateCallback stateCallback) {
         final SharedPreferences preferences = this.getSharedPreferences(PACKAGE_NAME, MODE_PRIVATE);
         final boolean listeningEnabled = preferences.getBoolean(AUDIO_MEMORY_ENABLED_KEY, true);
         final boolean recording = (state == STATE_RECORDING);
+        final boolean schedulePaused = listeningEnabled && state == STATE_READY
+                && preferences.getBoolean(SCHEDULE_ENABLED_KEY, false)
+                && !isWithinSchedule();
         final Handler sourceHandler = new Handler();
         // Note that we may not run this for quite a while, if audioReader decides to read a lot of audio!
         audioHandler.post(new Runnable() {
@@ -533,7 +536,7 @@ public class SaidItService extends Service {
                 sourceHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        stateCallback.state(listeningEnabled, recording,
+                        stateCallback.state(listeningEnabled, recording, schedulePaused,
                                 (stats.overwriting ? stats.total : stats.filled + stats.estimation) * bytesToSeconds,
                                 stats.total * bytesToSeconds,
                                 finalRecorded * bytesToSeconds);
@@ -603,7 +606,7 @@ public class SaidItService extends Service {
         PendingIntent pendingIntent = PendingIntent.getService(this, SCHEDULE_CHECK_REQUEST_CODE,
                 intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
     }
 
     private void cancelScheduleCheck() {

@@ -56,6 +56,7 @@ public class SaidItFragment extends Fragment {
 
     private boolean isListening = false;
     private boolean isRecording = false;
+    private boolean isSchedulePaused = false;
 
     private LinearLayout ready_section;
     private TextView history_limit;
@@ -238,25 +239,33 @@ public class SaidItFragment extends Fragment {
             }
         });
 
-        serviceStateCallback.state(isListening, isRecording, 0, 0, 0);
+        serviceStateCallback.state(isListening, isRecording, isSchedulePaused, 0, 0, 0);
         return rootView;
     }
 
     private SaidItService.StateCallback serviceStateCallback = new SaidItService.StateCallback() {
         @Override
-        public void state(final boolean listeningEnabled, final boolean recording, final float memorized, final float totalMemory, final float recorded) {
+        public void state(final boolean listeningEnabled, final boolean recording, final boolean schedulePaused, final float memorized, final float totalMemory, final float recorded) {
             final Activity activity = getActivity();
             if (activity == null) return;
             final Resources resources = activity.getResources();
-            if ((isRecording != recording) || (isListening != listeningEnabled)) {
+            if ((isRecording != recording) || (isListening != listeningEnabled) || (isSchedulePaused != schedulePaused)) {
                 if (recording != isRecording) {
                     isRecording = recording;
                     rec_section.setVisibility(recording ? View.VISIBLE : View.GONE);
                 }
 
-                if (listeningEnabled != isListening) {
+                if (listeningEnabled != isListening || schedulePaused != isSchedulePaused) {
+                    isSchedulePaused = schedulePaused;
                     isListening = listeningEnabled;
-                    if (listeningEnabled) {
+                    if (schedulePaused) {
+                        statusLabel.setText(R.string.schedule_paused);
+                        listenToggleButton.setText(R.string.stop);
+                        listenToggleButton.setIconResource(R.drawable.ic_stop);
+                        waveform.setActive(false);
+                        GradientDrawable dot = (GradientDrawable) statusDot.getBackground();
+                        dot.setColor(MaterialColors.getColor(statusDot, com.google.android.material.R.attr.colorOutline));
+                    } else if (listeningEnabled) {
                         statusLabel.setText(R.string.listening_enabled_disable);
                         listenToggleButton.setText(R.string.stop);
                         listenToggleButton.setIconResource(R.drawable.ic_stop);
@@ -274,10 +283,12 @@ public class SaidItFragment extends Fragment {
                     }
                 }
 
-                if (listeningEnabled && !recording) {
-                    ready_section.setVisibility(View.VISIBLE);
-                } else {
-                    ready_section.setVisibility(View.GONE);
+                boolean active = listeningEnabled && !recording && !schedulePaused;
+                ready_section.setVisibility(View.VISIBLE);
+                ready_section.setAlpha(active ? 1f : 0.38f);
+                saveButton.setEnabled(active);
+                for (int i = 0; i < durationChips.getChildCount(); i++) {
+                    durationChips.getChildAt(i).setEnabled(active);
                 }
             }
 
@@ -328,7 +339,7 @@ public class SaidItFragment extends Fragment {
         public void onClick(View v) {
             echo.getState(new SaidItService.StateCallback() {
                 @Override
-                public void state(final boolean listeningEnabled, boolean recording, float memorized, float totalMemory, float recorded) {
+                public void state(final boolean listeningEnabled, boolean recording, boolean schedulePaused, float memorized, float totalMemory, float recorded) {
                     if (listeningEnabled) {
                         new MaterialAlertDialogBuilder(getActivity())
                             .setTitle(R.string.stop_echo_title)
@@ -350,7 +361,7 @@ public class SaidItFragment extends Fragment {
                                 echo.enableListening();
                                 echo.getState(new SaidItService.StateCallback() {
                                     @Override
-                                    public void state(boolean listeningEnabled, boolean recording, float memorized, float totalMemory, float recorded) {
+                                    public void state(boolean listeningEnabled, boolean recording, boolean schedulePaused, float memorized, float totalMemory, float recorded) {
                                         dialog.dismiss();
                                     }
                                 });
@@ -368,7 +379,7 @@ public class SaidItFragment extends Fragment {
         public void onClick(final View v) {
             echo.getState(new SaidItService.StateCallback() {
                 @Override
-                public void state(final boolean listeningEnabled, final boolean recording, float memorized, float totalMemory, float recorded) {
+                public void state(final boolean listeningEnabled, final boolean recording, boolean schedulePaused, float memorized, float totalMemory, float recorded) {
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -384,7 +395,7 @@ public class SaidItFragment extends Fragment {
         public void recordSeconds(final float seconds, final boolean keepRecording) {
             echo.getState(new SaidItService.StateCallback() {
                 @Override
-                public void state(final boolean listeningEnabled, final boolean recording, float memorized, float totalMemory, float recorded) {
+                public void state(final boolean listeningEnabled, final boolean recording, boolean schedulePaused, float memorized, float totalMemory, float recorded) {
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {

@@ -98,7 +98,7 @@
     <string name="schedule_to">To</string>
     <string name="schedule_on">On</string>
     <string name="schedule_off">Off</string>
-    <string name="schedule_paused_notification">Toldya is paused (outside active hours)</string>
+    <string name="schedule_paused">Paused (outside active hours)</string>
     <!-- Others -->
 
     <string name="sample_time">22 minutes and 30 seconds.</string>
